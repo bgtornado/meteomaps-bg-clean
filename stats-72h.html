@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+<html lang="bg">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>meteomaps.bg – 72-часова статистика</title>
+<meta content="Статистика за следващите 72 часа: валежи, нестабилност, гръмотевични бури и максимални пориви на вятъра за България." name="description"/>
+<style>
+    :root{
+      --bg:#06101e;
+      --panel:#0d1b34;
+      --panel-2:#122444;
+      --line:rgba(255,255,255,.09);
+      --text:#f5f8ff;
+      --muted:#b6c3df;
+      --cyan:#7ce8ff;
+      --blue:#62b6ff;
+      --violet:#8e7dff;
+      --pink:#ff95d5;
+      --yellow:#ffd76a;
+      --green:#7ee5aa;
+      --orange:#ffb46a;
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+      --radius:26px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(124,232,255,.12), transparent 26%),
+        radial-gradient(circle at 100% 0%, rgba(142,125,255,.11), transparent 24%),
+        radial-gradient(circle at 100% 100%, rgba(255,149,213,.07), transparent 18%),
+        linear-gradient(180deg, #05101e 0%, #071425 100%);
+    }
+
+    a{color:inherit;text-decoration:none}
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter:blur(18px);
+      background:rgba(6,16,30,.82);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:1320px; margin:0 auto; padding:12px 22px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .brand-badge{
+      width:38px;height:38px;border-radius:14px; display:grid;place-items:center;
+      font-weight:900;font-size:15px;color:#07101d;
+      background:linear-gradient(135deg,var(--cyan),var(--blue),var(--violet));
+      box-shadow:0 0 24px rgba(98,182,255,.35);
+      flex:0 0 auto;
+    }
+    .brand-title{font-size:18px;font-weight:900;line-height:1}
+    .brand-sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .nav{display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end}
+    .nav a{
+      padding:10px 14px; border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04); color:#d7e3fa; font-size:13px; font-weight:800;
+    }
+    .nav a.primary{
+      background:linear-gradient(135deg, rgba(98,182,255,.16), rgba(142,125,255,.16));
+      color:white;
+    }
+
+    .page{max-width:1320px; margin:0 auto; padding:22px 22px 54px}
+
+    .hero{
+      display:grid; grid-template-columns:1.25fr .9fr; gap:18px; margin-bottom:18px;
+    }
+    .hero-main,.hero-side,.stat,.section{
+      background:linear-gradient(180deg, rgba(18,36,68,.98), rgba(10,22,42,.98));
+      border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    }
+    .hero-main{
+      position:relative; overflow:hidden; padding:34px 30px 28px; min-height:280px;
+    }
+    .hero-main:before{
+      content:""; position:absolute; inset:auto -80px -100px auto;
+      width:320px; height:320px; border-radius:50%;
+      background:radial-gradient(circle, rgba(124,232,255,.22), transparent 62%);
+    }
+    .hero-main:after{
+      content:""; position:absolute; inset:-120px auto auto -120px;
+      width:300px; height:300px; border-radius:50%;
+      background:radial-gradient(circle, rgba(142,125,255,.16), transparent 62%);
+    }
+
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 13px;
+      border-radius:999px; border:1px solid rgba(255,255,255,.12);
+      background:linear-gradient(135deg, rgba(124,232,255,.12), rgba(255,215,106,.1));
+      font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase;
+      color:#effbff; margin-bottom:16px;
+    }
+    h1{
+      margin:0; font-size:clamp(38px,5vw,62px); line-height:.98; letter-spacing:-.03em;
+      max-width:680px;
+    }
+    .hero-text{
+      position:relative; z-index:1; margin-top:16px; max-width:720px;
+      color:var(--muted); font-size:17px; line-height:1.72;
+    }
+    .hero-pills{display:flex; flex-wrap:wrap; gap:10px; margin-top:20px}
+    .pill{
+      padding:9px 13px; border-radius:999px; border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.045); color:#eef4ff; font-size:13px; font-weight:800;
+    }
+
+    .hero-side{
+      padding:24px; display:flex; flex-direction:column; justify-content:flex-start; gap:14px; min-height:280px;
+    }
+    .hero-side h3{margin:0; font-size:22px; line-height:1.2}
+    .focus-stack{display:grid; gap:10px; margin-top:4px}
+    .focus{
+      padding:14px 15px; border-radius:18px; background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .focus-label{
+      color:var(--cyan); font-size:11px; font-weight:900; letter-spacing:.08em;
+      text-transform:uppercase; margin-bottom:6px;
+    }
+    .focus-value{font-size:17px; font-weight:800; line-height:1.45}
+
+    .stats-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px}
+    .stat{
+      padding:20px 20px 18px; position:relative; overflow:hidden;
+    }
+    .stat:before{
+      content:""; position:absolute; right:-40px; top:-40px; width:120px; height:120px; border-radius:50%;
+      background:radial-gradient(circle, rgba(255,255,255,.08), transparent 62%);
+    }
+    .stat-label{
+      color:var(--muted); font-size:12px; font-weight:900; letter-spacing:.07em;
+      text-transform:uppercase; margin-bottom:10px;
+    }
+    .stat-value{
+      font-size:42px; line-height:1; font-weight:900; letter-spacing:-.03em; margin-bottom:10px;
+    }
+    .stat-note{color:#d8e2f6; font-size:14px; line-height:1.55; max-width:95%}
+
+    .middle{display:grid; grid-template-columns:1.18fr .82fr; gap:18px; margin-bottom:18px}
+    .section{padding:22px}
+    .section h2{margin:0 0 8px; font-size:28px; line-height:1.15; letter-spacing:-.02em}
+    .section-desc{color:var(--muted); font-size:14px; line-height:1.7; margin-bottom:18px}
+
+    .rank-list{display:grid; gap:10px}
+    .rank-row{
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:14px 15px; border-radius:18px; border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.025));
+    }
+    .rank-num{
+      width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+      font-weight:900; font-size:13px; color:#07101d;
+      background:linear-gradient(135deg,#ffe17d,#fff1bd);
+      box-shadow:0 4px 14px rgba(255,215,106,.26);
+    }
+    .rank-main{font-size:18px; font-weight:850; line-height:1.2}
+    .rank-sub{margin-top:3px; color:var(--muted); font-size:13px}
+    .rank-val{font-size:28px; font-weight:900; letter-spacing:-.03em; white-space:nowrap}
+
+    .split{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .mini{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+      border:1px solid rgba(255,255,255,.08); border-radius:22px; padding:18px; min-height:100%;
+    }
+    .tag{
+      display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12); font-size:12px; font-weight:900; letter-spacing:.03em; margin-bottom:10px;
+    }
+    .tag.rain{background:rgba(98,182,255,.12); color:#bfe8ff}
+    .tag.storm{background:rgba(255,180,106,.12); color:#ffe3bf}
+    .mini h3{margin:0 0 12px; font-size:28px; line-height:1.05; letter-spacing:-.03em}
+    .mini-list{display:grid; gap:10px}
+    .mini-item{
+      padding:14px; border-radius:16px; border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.035); color:#edf3ff; font-size:14px; line-height:1.6;
+    }
+
+    .accent-blue{color:var(--cyan)}
+    .accent-green{color:var(--green)}
+    .accent-pink{color:#ffb6e4}
+    .accent-yellow{color:var(--yellow)}
+    .accent-violet{color:#b9a9ff}
+    .accent-orange{color:var(--orange)}
+
+    @media (max-width: 1260px){
+      .stats-grid{grid-template-columns:repeat(3,1fr)}
+    }
+    @media (max-width: 1120px){
+      .hero,.middle{grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 760px){
+      .page{padding:16px 12px 34px}
+      .topbar-inner{padding:10px 12px}
+      .nav{display:none}
+      .hero-main,.hero-side,.section{padding:18px}
+      .stats-grid,.split{grid-template-columns:1fr}
+      .rank-row{grid-template-columns:auto 1fr}
+      .rank-val{grid-column:2/3}
+      h1{font-size:42px}
+      .stat-value{font-size:36px}
+      .rank-val{font-size:24px}
+      .mini h3{font-size:24px}
+    }
+  
+    .run-badge{
+      position:absolute;
+      top:18px;
+      right:22px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#ffd76a;
+      background:rgba(255,215,106,.08);
+      border:1px solid rgba(255,215,106,.35);
+      padding:6px 10px;
+      border-radius:999px;
+    }
+
+  </style>
+</head>
+<body>
+<header class="topbar">
+<div class="topbar-inner">
+<div class="brand">
+<div class="brand-badge">M</div>
+<div>
+<div class="brand-title">meteomaps.bg</div>
+<div class="brand-sub">Статистика за следващите 72 часа</div>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Карти</a>
+<a href="meteogram.html">Прогноза по градове</a>
+<a class="primary" href="#">72ч статистика</a>
+</nav>
+</div>
+</header>
+<main class="page">
+<section class="hero">
+<div class="hero-main">
+<div class="eyebrow">72-часова статистика</div>
+<h1><span class="accent-blue">72-часова</span><br/>прогнозна статистика</h1>
+<div class="hero-text">
+          Най-важните данни от модела за следващите 72 часа са събрани в една страница –
+          къде се очакват най-големи валежни количества, къде почасовият интензитет е най-висок,
+          къде атмосферата е най-нестабилна и в кои райони поривите на вятъра ще бъдат най-съществени.
+        </div>
+<div class="hero-pills">
+<div class="pill">ALADIN 2.3 км</div>
+<div class="pill">72 часа напред</div>
+<div class="pill">Валежи по часове</div>
+<div class="pill">Нестабилност / CAPE</div>
+<div class="pill">Гръмотевични бури</div>
+<div class="pill">Максимални пориви</div>
+</div>
+</div>
+<aside class="hero-side" style="position:relative;">
+<div class="run-badge">12Z Run 05.10.26</div>
+<h3>Ключови стойности</h3>
+<div class="focus-stack">
+<div class="focus">
+<div class="focus-label">Най-голям общ валеж</div>
+<div class="focus-value">Ямбол — <span class="accent-blue">0.0 мм</span></div>
+</div>
+<div class="focus">
+<div class="focus-label">Най-силен почасов валеж</div>
+<div class="focus-value">— — <span class="accent-yellow">0.0 мм/ч</span></div>
+</div>
+<div class="focus">
+<div class="focus-label">Най-силен порив</div>
+<div class="focus-value">Горна Оряховица — <span class="accent-pink">30.4 км/ч</span></div>
+</div>
+<div class="focus">
+<div class="focus-label">Най-висока нестабилност</div>
+<div class="focus-value">Поморие — <span class="accent-violet">264 J/kg</span></div>
+</div>
+<div class="focus">
+<div class="focus-label">Най-много гръмотевични часове</div>
+<div class="focus-value">Ямбол — <span class="accent-orange">0 часа</span></div>
+</div>
+</div>
+</aside>
+</section>
+<section class="stats-grid">
+<article class="stat">
+<div class="stat-label">Градове със сумарен валеж ≥ 1 мм</div>
+<div class="stat-value accent-green">0</div>
+<div class="stat-note">Общ брой населени места с прогнозиран валеж за периода.</div>
+</article>
+<article class="stat">
+<div class="stat-label">Градове със сумарен валеж &gt; 10 мм</div>
+<div class="stat-value accent-yellow">0</div>
+<div class="stat-note">Брой градове с по-съществен сумарен валеж за периода.</div>
+</article>
+<article class="stat">
+<div class="stat-label">Градове с порив ≥ 40 км/ч</div>
+<div class="stat-value accent-pink">0</div>
+<div class="stat-note">Общ брой населени места с по-осезаеми пориви на вятъра.</div>
+</article>
+<article class="stat">
+<div class="stat-label">Градове с CAPE ≥ 500 J/kg</div>
+<div class="stat-value accent-violet">0</div>
+<div class="stat-note">Брой населени места, в които се очаква по-осезаема нестабилност.</div>
+</article>
+<article class="stat">
+<div class="stat-label">Часове с гръмотевични бури</div>
+<div class="stat-value accent-orange">0</div>
+<div class="stat-note">Брой часове, в които има гръмотевични условия поне в един град.</div>
+</article>
+</section>
+<section class="middle">
+<div class="section">
+<h2>🌧️ Топ градове по сумарен валеж</h2>
+<div class="section-desc">
+          Класация по общо валежно количество за целия 72-часов период.
+        </div>
+<div class="rank-list"><div class="rank-row">
+<div class="rank-num">1</div>
+<div><div class="rank-main">Ямбол</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">2</div>
+<div><div class="rank-main">Якоруда</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">3</div>
+<div><div class="rank-main">Ябланица</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">4</div>
+<div><div class="rank-main">Шумен</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">5</div>
+<div><div class="rank-main">Шипка</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">6</div>
+<div><div class="rank-main">Шивачево</div><div class="rank-sub">Макс 1ч: 0.0 мм</div></div>
+<div class="rank-val accent-blue">0.0 мм</div>
+</div></div>
+</div>
+<div class="section">
+<h2>⚡ Най-силен почасов валеж</h2>
+<div class="section-desc">
+          Часовете с най-висок валежен пик в рамките на периода.
+        </div>
+<div class="split">
+<div class="mini">
+<div class="tag rain">Най-силен час</div>
+<h3>—</h3>
+<div class="mini-list"><div class="mini-item"><strong>—</strong><br/>0.0 мм за 1 час</div></div>
+</div>
+<div class="mini">
+<div class="tag rain">Интензивна серия</div>
+<h3>—</h3>
+<div class="mini-list"><div class="mini-item"><strong>—</strong><br/>Няма данни</div></div>
+</div>
+</div>
+</div>
+</section>
+<section class="middle">
+<div class="section">
+<h2>🌩️ Топ градове по нестабилност</h2>
+<div class="section-desc">
+        Класация по максимален CAPE за периода. 
+      </div>
+<div class="rank-list"><div class="rank-row">
+<div class="rank-num">1</div>
+<div><div class="rank-main">Поморие</div><div class="rank-sub">Пик: 7 октомври, 21:00</div></div>
+<div class="rank-val accent-violet">264 J/kg</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">2</div>
+<div><div class="rank-main">Свети Влас</div><div class="rank-sub">Пик: 8 октомври, 01:00</div></div>
+<div class="rank-val accent-violet">238 J/kg</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">3</div>
+<div><div class="rank-main">Ахтопол</div><div class="rank-sub">Пик: 8 октомври, 15:00</div></div>
+<div class="rank-val accent-violet">223 J/kg</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">4</div>
+<div><div class="rank-main">Царево</div><div class="rank-sub">Пик: 8 октомври, 14:00</div></div>
+<div class="rank-val accent-violet">217 J/kg</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">5</div>
+<div><div class="rank-main">Несебър</div><div class="rank-sub">Пик: 8 октомври, 00:00</div></div>
+<div class="rank-val accent-violet">211 J/kg</div>
+</div></div>
+</div>
+<div class="section">
+<h2>⛈️ Градове с най-много гръмотевични часове</h2>
+<div class="section-desc">
+        Отделна класация по брой часове с гръмотевичен сигнал в периода.
+      </div>
+<div class="rank-list"><div class="rank-row">
+<div class="rank-num">1</div>
+<div><div class="rank-main">Ямбол</div><div class="rank-sub">Най-активен ден: —</div></div>
+<div class="rank-val accent-orange">0 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">2</div>
+<div><div class="rank-main">Якоруда</div><div class="rank-sub">Най-активен ден: —</div></div>
+<div class="rank-val accent-orange">0 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">3</div>
+<div><div class="rank-main">Ябланица</div><div class="rank-sub">Най-активен ден: —</div></div>
+<div class="rank-val accent-orange">0 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">4</div>
+<div><div class="rank-main">Шумен</div><div class="rank-sub">Най-активен ден: —</div></div>
+<div class="rank-val accent-orange">0 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">5</div>
+<div><div class="rank-main">Шипка</div><div class="rank-sub">Най-активен ден: —</div></div>
+<div class="rank-val accent-orange">0 ч</div>
+</div></div>
+</div>
+</section>
+<section class="section">
+<h2>☀️ Топ градове по слънчеви часове</h2>
+<div class="section-desc">
+Класация по общ брой слънчеви часове (само дневни часове с облачност под 20%).
+</div>
+<div class="rank-list"><div class="rank-row">
+<div class="rank-num">1</div>
+<div><div class="rank-main">Радомир</div><div class="rank-sub">Най-слънчев ден: 6 октомври</div></div>
+<div class="rank-val accent-yellow">35 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">2</div>
+<div><div class="rank-main">Перник</div><div class="rank-sub">Най-слънчев ден: 6 октомври</div></div>
+<div class="rank-val accent-yellow">35 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">3</div>
+<div><div class="rank-main">Кюстендил</div><div class="rank-sub">Най-слънчев ден: 6 октомври</div></div>
+<div class="rank-val accent-yellow">35 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">4</div>
+<div><div class="rank-main">Бобов дол</div><div class="rank-sub">Най-слънчев ден: 6 октомври</div></div>
+<div class="rank-val accent-yellow">35 ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">5</div>
+<div><div class="rank-main">Батановци</div><div class="rank-sub">Най-слънчев ден: 6 октомври</div></div>
+<div class="rank-val accent-yellow">35 ч</div>
+</div></div>
+</section>
+<section class="section">
+<h2>💨 Топ градове по максимален порив</h2>
+<div class="section-desc">
+        Класация по най-висок отчетен порив на вятъра за периода.
+      </div>
+<div class="rank-list"><div class="rank-row">
+<div class="rank-num">1</div>
+<div><div class="rank-main">Горна Оряховица</div><div class="rank-sub">8 октомври, 00:00</div></div>
+<div class="rank-val accent-pink">30.4 км/ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">2</div>
+<div><div class="rank-main">Бухово</div><div class="rank-sub">5 октомври, 20:00</div></div>
+<div class="rank-val accent-pink">29.9 км/ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">3</div>
+<div><div class="rank-main">Ивайловград</div><div class="rank-sub">5 октомври, 17:00</div></div>
+<div class="rank-val accent-pink">29.3 км/ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">4</div>
+<div><div class="rank-main">Шабла</div><div class="rank-sub">8 октомври, 14:00</div></div>
+<div class="rank-val accent-pink">29.2 км/ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">5</div>
+<div><div class="rank-main">Джебел</div><div class="rank-sub">5 октомври, 16:00</div></div>
+<div class="rank-val accent-pink">29.0 км/ч</div>
+</div>
+<div class="rank-row">
+<div class="rank-num">6</div>
+<div><div class="rank-main">Силистра</div><div class="rank-sub">8 октомври, 02:00</div></div>
+<div class="rank-val accent-pink">28.9 км/ч</div>
+</div></div>
+</section>
+</main>
+</body>
+</html>

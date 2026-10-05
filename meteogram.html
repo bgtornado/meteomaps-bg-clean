@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <link rel="icon" href="data:,">
+  <link rel="shortcut icon" href="data:,">
+  <link rel="apple-touch-icon" href="data:,">
+<meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Метеограма – Градове (WRF)</title>
+  <style>
+    :root{
+      --bg1:#070a12; --bg2:#0b1230;
+      --card:#0b1432cc;
+      --ink:rgba(245,245,247,.93);
+      --muted:rgba(245,245,247,.62);
+      --line:rgba(255,255,255,.10);
+      --pill:rgba(255,255,255,.06);
+      --pill2:rgba(0,0,0,.14);
+      --accent:rgba(115,224,255,.55);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 480px at 50% 0%, rgba(73,163,255,.22), transparent 60%),
+        radial-gradient(1000px 700px at 50% 35%, rgba(36,78,160,.20), transparent 65%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    .wrap{max-width:none;width:100%;margin:0;padding:10px;}
+    .card{
+      width:100%;
+      background:linear-gradient(180deg, rgba(10,20,54,.86), rgba(10,14,34,.84));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:0 24px 70px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .header{
+      display:flex;align-items:flex-start;gap:14px;
+      padding:12px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .title{
+      flex:1 1 auto;
+      min-width: 220px;
+    }
+    .title h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+      font-weight:1000;
+    }
+    .right{
+      text-align:right;
+      font-weight:900;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.25;
+      min-width: 230px;
+      padding-top:2px;
+      white-space:nowrap;
+    }
+    .controls{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      background:rgba(0,0,0,.14);
+      margin:10px 12px 10px;
+    }
+    .controls label{font-weight:1000; color:rgba(245,245,247,.9); font-size:14px;}
+    .controls select{
+      appearance:none;
+      color-scheme: dark;
+      background:rgba(255,255,255,.06);
+      color:rgba(245,245,247,.95);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:8px 12px;
+      font-weight:1000;
+      font-size:14px;
+      outline:none;
+      max-width: 260px;
+    }
+
+    .controls select option{
+      background-color: #0b1230;
+      color: rgba(245,245,247,.95);
+    }
+    .controls select optgroup{
+      background-color: #0b1230;
+      color: rgba(245,245,247,.95);
+    }
+
+    .controls select:focus{border-color:var(--accent);}
+    .controls .selected{
+      margin-left:auto;
+      font-weight:1000;
+      font-size:14px;
+      color:rgba(245,245,247,.92);
+      letter-spacing:.2px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(115,224,255,.35);
+      background:linear-gradient(90deg, rgba(59,169,255,.10), rgba(138,92,255,.08));
+      white-space:nowrap;
+    }
+    .dayTitleBig{
+      font-weight:1100;
+      font-size:18px;
+      margin:6px 14px 10px;
+      color:rgba(245,245,247,.95);
+    }
+    .strip{padding:12px;background:linear-gradient(180deg, rgba(11,22,48,.55), rgba(13,18,37,.55));}
+    .dayGridSingle{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns:140px;
+      gap:12px;
+      overflow-x:scroll;
+      overflow-y:hidden;
+      scrollbar-gutter: stable both-edges;
+      -webkit-overflow-scrolling: touch;
+      padding:0 14px 10px;
+      align-items:stretch;
+    }
+    .dayGridSingle::-webkit-scrollbar{height:12px}
+    .dayGridSingle::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+    .dayGridSingle::-webkit-scrollbar-track{background:rgba(0,0,0,.10)}
+    .cell{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px 12px 10px;
+      text-align:center;
+      position:relative;
+    }
+    .hour{font-weight:1000;font-size:13px;color:rgba(245,245,247,.92);letter-spacing:.3px;}
+    .temp{font-weight:1100;font-size:28px;margin-top:4px;line-height:1;}
+    .deg{font-size:.75em;opacity:.85}
+    .ico{width:50px;height:50px;margin:6px auto 4px;display:block}
+    .pop{display:flex;align-items:center;justify-content:center;gap:6px;font-weight:1000;font-size:13px;color:rgba(245,245,247,.82);}
+    .wind{margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:rgba(245,245,247,.70);font-weight:900;}
+    .gust{margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:1000;min-height:16px;color:rgba(245,245,247,.58);}
+    .gust svg{opacity:.95}
+    .gust-v-low{color:rgba(245,245,247,.58);}
+    .gust-v-40{color:#ffd75e;}
+    .gust-v-70{color:#ffad42;}
+    .gust-v-100{color:#ff5a5a;}
+    .gust-v-120{color:#c07cff;}
+    .legend{
+      padding:8px 14px 12px;
+      font-size:12px;color:rgba(245,245,247,.55);
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+
+input[list]{
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;
+  padding:10px 12px;
+  min-width:180px;
+  outline:none;
+}
+input[list]::placeholder{color:rgba(255,255,255,.55);}
+input[list]:focus{
+  border-color:rgba(120,180,255,.55);
+  box-shadow:0 0 0 3px rgba(65,150,255,.14);
+}
+
+    .summaryInline{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+      margin-top:6px;
+      font-size:12px;
+      color:rgba(245,245,247,.78);
+      font-weight:800;
+      letter-spacing:.15px;
+      line-height:1.35;
+    }
+    .summaryInline .item{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      white-space:nowrap;
+    }
+    .summaryInline .icon{
+      font-size:13px;
+      line-height:1;
+      opacity:.95;
+    }
+    .summaryInline .label{
+      color:rgba(245,245,247,.72);
+    }
+    .summaryInline .value{
+      color:rgba(245,245,247,.95);
+    }
+    .summaryInline .label{
+      color:rgba(245,245,247,.78);
+      font-weight:900;
+    }
+    .summaryInline .item.tooltipWrap{
+      position:relative;
+      cursor:help;
+    }
+    .summaryInline .item.tooltipWrap::after{
+      content:attr(data-tooltip);
+      position:absolute;
+      left:0;
+      top:calc(100% + 8px);
+      background:rgba(9,17,40,.97);
+      color:rgba(245,245,247,.96);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:7px 10px;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.25;
+      white-space:nowrap;
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(-3px);
+      transition:opacity .16s ease, transform .16s ease;
+      box-shadow:0 10px 24px rgba(0,0,0,.28);
+      z-index:30;
+    }
+    .summaryInline .item.tooltipWrap:hover::after{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .error{
+      margin:12px;
+      border:1px solid rgba(255,118,118,.35);
+      background:rgba(255,75,75,.10);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      color:rgba(255,220,220,.95);
+      white-space:pre-wrap;
+    }
+    @media (max-width: 900px){
+      .summaryGrid{grid-template-columns:1fr;}
+    }
+    @media (max-width: 700px){
+      .right{min-width:auto;white-space:normal}
+      .controls .selected{margin-left:0}
+    }
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(180deg, rgba(50,165,255,0.35), rgba(30,110,220,0.22));
+      color: rgba(255,255,255,0.95);
+      text-decoration:none;
+      font-weight:700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .back-btn:hover{ filter: brightness(1.08); }
+
+    .headerActions{display:flex;align-items:center;gap:12px;}
+    .btnBack{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:18px;color:#eaf2ff;background:rgba(65,150,255,0.18);border:1px solid rgba(120,180,255,0.35);text-decoration:none;font-weight:600;white-space:nowrap;}
+    .btnBack:hover{background:rgba(65,150,255,0.28);}
+    @media (max-width:860px){.btnBack{padding:8px 10px;font-size:13px;}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div class="title">
+          <h1 id="hCity">Метеограма – Градове</h1>
+          <div class="summaryInline" id="summaryInline">
+            <div class="item">
+              <span class="icon">💧</span>
+              <span class="label">Валеж:</span>
+              <span class="value" id="sumPrecipInline">—</span>
+            </div>
+            <div class="item tooltipWrap" data-tooltip="слънчеви часове = часове с под 20 % облачност">
+              <span class="icon">☀️</span>
+              <span class="label">Слънчеви часове:</span>
+              <span class="value" id="sunHoursInline">—</span>
+            </div>
+            <div class="item">
+              <span class="icon">💨</span>
+              <span class="label">Макс порив:</span>
+              <span class="value" id="maxGustInline">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="headerActions">
+          <a class="btnBack" id="backToMaps" href="index.html">← Обратно към картите</a>
+          <div class="right" id="hInfo">—</div>
+        </div>
+      </div>
+
+      <div class="error" id="err"></div>
+
+      <div class="controls">
+  <label for="cityInput">Въведи град:</label>
+  <input id="cityInput" list="cityList" placeholder="Въведи град" autocomplete="off">
+  <datalist id="cityList"></datalist>
+  <label for="daySelect" class="dayLbl">Избери дата:</label>
+  <select id="daySelect"></select>
+  <div class="selected" id="selectedCity">—</div>
+  <div class="selected" id="selectedDay">—</div>
+</div>
+
+<div id="dayTitle" class="dayTitleBig"></div>
+      <div class="strip">
+        <div id="dayGrid" class="dayGridSingle"></div>
+      </div>
+
+      <div class="legend">
+        Иконка = облачност/валеж/буря • 💧 = вероятност за валеж (%) • ☔ = валеж в mm за 1 час • стрелка = посока на вятъра (откъде духа) • допълнителният ред отдолу = пориви (жълто ≥ 40 km/h, оранжево ≥ 70, червено ≥ 100, лилаво ≥ 120).
+      </div>
+    </div>
+  </div>
+
+<script>
+const ICONS = {
+
+moon: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+  <path d="M42 10c-9 3-15 12-15 22 0 13 10 24 23 24 2 0 4 0 6-1-4 5-10 8-17 8-14 0-25-11-25-25 0-12 8-22 18-26 2-1 7-2 10-2z" fill="#FFD15A"/>
+</svg>`,
+moon_partly: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+  <path d="M42 10c-9 3-15 12-15 22 0 13 10 24 23 24 2 0 4 0 6-1-4 5-10 8-17 8-14 0-25-11-25-25 0-12 8-22 18-26 2-1 7-2 10-2z" fill="#FFD15A"/>
+  <g transform="translate(12,26)">
+    <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" fill="rgba(255,255,255,0.92)"/>
+    <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+  </g>
+</svg>`,
+  sun: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <circle cx="32" cy="32" r="11" fill="#FFD15A"/>
+    <g stroke="#FFD15A" stroke-width="4" stroke-linecap="round">
+      <path d="M32 6v10"/><path d="M32 48v10"/>
+      <path d="M6 32h10"/><path d="M48 32h10"/>
+      <path d="M13 13l7 7"/><path d="M44 44l7 7"/>
+      <path d="M51 13l-7 7"/><path d="M20 44l-7 7"/>
+    </g>
+  </svg>`,
+  
+  mostly_sun: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <circle cx="24" cy="22" r="9" fill="#FFD15A"/>
+    <g stroke="#FFD15A" stroke-width="3.6" stroke-linecap="round" opacity="0.95">
+      <path d="M24 6v8"/><path d="M24 38v8"/>
+      <path d="M8 22h8"/><path d="M40 22h8"/>
+      <path d="M12.5 10.5l5.8 5.8"/><path d="M33.7 31.7l5.8 5.8"/>
+      <path d="M39.5 10.5l-5.8 5.8"/><path d="M18.3 31.7l-5.8 5.8"/>
+    </g>
+
+    <g transform="translate(18,26)">
+      <path d="M10 18h18a8.5 8.5 0 0 0 0-17
+               10.5 10.5 0 0 0-20 3.6
+               A7 7 0 0 0 10 18Z"
+            fill="rgba(217,227,240,0.92)"/>
+      <path d="M10 18h18a8.5 8.5 0 0 0 0-17
+               10.5 10.5 0 0 0-20 3.6
+               A7 7 0 0 0 10 18Z"
+            stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+    </g>
+  </svg>`,
+cloudy: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 44h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 18 38 14 32 14c-7 0-13 5-14 12C11 27 6 31 6 38c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+  </svg>`,
+  partly: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <circle cx="22" cy="22" r="8" fill="#FFD15A"/>
+    <path d="M26 46h23c6 0 11-4 11-9s-5-9-11-9c-1 0-2 0-3 .2C43 24 39 21 34 21c-6 0-11 4-12 10C15 31 10 34 10 40c0 4 3 6 6 6h10z" fill="#D9E3F0"/>
+  </svg>`,
+  rain: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 38h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 12 38 8 32 8c-7 0-13 5-14 12C11 21 6 25 6 32c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+    <g stroke="#6CC4FF" stroke-width="4" stroke-linecap="round">
+      <path d="M22 46l-3 6"/><path d="M34 46l-3 6"/><path d="M46 46l-3 6"/>
+    </g>
+  </svg>`,
+  light_rain: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 38h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 12 38 8 32 8c-7 0-13 5-14 12C11 21 6 25 6 32c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+    <path d="M34 46l-2.8 6" stroke="#6CC4FF" stroke-width="4" stroke-linecap="round"/>
+  </svg>`,
+  partly_light_rain: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <circle cx="22" cy="22" r="8" fill="#FFD15A"/>
+    <path d="M26 42h23c6 0 11-4 11-9s-5-9-11-9c-1 0-2 0-3 .2C43 20 39 17 34 17c-6 0-11 4-12 10C15 27 10 30 10 36c0 4 3 6 6 6h10z" fill="#D9E3F0"/>
+    <path d="M35 45l-2.8 6" stroke="#6CC4FF" stroke-width="4" stroke-linecap="round"/>
+  </svg>`,
+  moon_partly_light_rain: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M42 10c-9 3-15 12-15 22 0 13 10 24 23 24 2 0 4 0 6-1-4 5-10 8-17 8-14 0-25-11-25-25 0-12 8-22 18-26 2-1 7-2 10-2z" fill="#FFD15A"/>
+    <g transform="translate(12,22)">
+      <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" fill="rgba(255,255,255,0.92)"/>
+      <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+      <path d="M24 22l-2.8 6" stroke="#6CC4FF" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </svg>`,
+  thunder: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 36h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 10 38 6 32 6c-7 0-13 5-14 12C11 19 6 23 6 30c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+    <path d="M30 40l-6 12h8l-4 12 14-18h-8l4-6h-8z" fill="#FFD15A"/>
+  </svg>`,
+  snow: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 38h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 12 38 8 32 8c-7 0-13 5-14 12C11 21 6 25 6 32c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+    <g fill="#BFE6FF">
+      <circle cx="22" cy="50" r="2.6"/><circle cx="34" cy="50" r="2.6"/><circle cx="46" cy="50" r="2.6"/>
+    </g>
+  </svg>`,
+  light_snow: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M22 38h26c7 0 12-4 12-10s-5-10-12-10c-1 0-2 0-3 .2C43 12 38 8 32 8c-7 0-13 5-14 12C11 21 6 25 6 32c0 4 3 6 7 6h9z" fill="#D9E3F0"/>
+    <g fill="#BFE6FF">
+      <circle cx="34" cy="50" r="2.6"/>
+    </g>
+  </svg>`,
+  partly_light_snow: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <circle cx="22" cy="22" r="8" fill="#FFD15A"/>
+    <path d="M26 42h23c6 0 11-4 11-9s-5-9-11-9c-1 0-2 0-3 .2C43 20 39 17 34 17c-6 0-11 4-12 10C15 27 10 30 10 36c0 4 3 6 6 6h10z" fill="#D9E3F0"/>
+    <circle cx="35" cy="50" r="2.6" fill="#BFE6FF"/>
+  </svg>`,
+  moon_partly_light_snow: `<svg class="ico" viewBox="0 0 64 64" fill="none">
+    <path d="M42 10c-9 3-15 12-15 22 0 13 10 24 23 24 2 0 4 0 6-1-4 5-10 8-17 8-14 0-25-11-25-25 0-12 8-22 18-26 2-1 7-2 10-2z" fill="#FFD15A"/>
+    <g transform="translate(12,22)">
+      <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" fill="rgba(255,255,255,0.92)"/>
+      <path d="M16 18h18a10 10 0 0 0 0-20 12 12 0 0 0-23 4A8 8 0 0 0 16 18Z" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+      <circle cx="24" cy="26" r="2.6" fill="#BFE6FF"/>
+    </g>
+  </svg>`
+};
+function dropSVG(){
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13z" fill="rgba(180,230,255,.85)"/>
+  </svg>`;
+}
+
+function getPrecipDisplayType(h){
+  const raw = Number(h?.precip1h_mm ?? 0);
+  const p = Math.round(raw * 10) / 10;
+  if(!isFinite(p) || p < 0.1) return "none";
+  if(p < 0.3) return "light";
+  return "normal";
+}
+function formatPrecipMm(v){
+  const n = Number(v ?? 0);
+  if(!isFinite(n) || n < 0.1) return "";
+  return `${n.toFixed(1)} mm`;
+}
+
+function windArrowSVG(deg){
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="transform:rotate(${(deg + 180) % 360}deg)">
+    <path d="M12 3l7 18-7-4-7 4 7-18z" fill="rgba(245,245,247,.55)"/>
+  </svg>`;
+}
+function gustSVG(){
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 9h9.5c1.8 0 3-1 3-2.4S14.8 4 13.3 4c-1.1 0-2 .4-2.8 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M3 13h13.5c2 0 3.5 1.2 3.5 2.9 0 1.7-1.5 3.1-3.6 3.1-1.3 0-2.5-.4-3.3-1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M3 17h7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`;
+}
+function gustClass(v){
+  const n = Number(v);
+  if(!isFinite(n)) return "gust-v-low";
+  if(n >= 120) return "gust-v-120";
+  if(n >= 100) return "gust-v-100";
+  if(n >= 70) return "gust-v-70";
+  if(n >= 40) return "gust-v-40";
+  return "gust-v-low";
+}
+function showErr(msg){
+  const el = document.getElementById("err");
+  el.style.display = "block";
+  el.textContent = msg;
+}
+function q(name){
+  const u = new URL(window.location.href);
+  return u.searchParams.get(name);
+}
+function setParam(name, value){
+  const u = new URL(window.location.href);
+  u.searchParams.set(name, value);
+  history.replaceState({}, "", u.toString());
+}
+function keyToBG(key){
+  const [Y,M,D] = key.split("-").map(x=>parseInt(x,10));
+  return `${String(D).padStart(2,"0")}.${String(M).padStart(2,"0")}.${Y}`;
+}
+function fmtDateTimeBG(d){
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mi = String(d.getMinutes()).padStart(2,"0");
+  return `${dd}.${mm} ${hh}:${mi}`;
+}
+
+
+async function loadCities(){
+  const res = await fetch("meteograms/cities.json", {cache:"no-store"});
+  if(!res.ok) throw new Error("Не мога да заредя списъка с градове");
+  const j = await res.json();
+  return j.cities || [];
+}
+
+async function loadCityJson(cityId){
+  const res = await fetch(`meteograms/latest/${cityId}.json`, {cache:"no-store"});
+  if(!res.ok) throw new Error(`Няма метеограма за "${cityId}"`);
+  return await res.json();
+}
+
+function clearErr(){
+  const el = document.getElementById("err");
+  el.style.display = "none";
+  el.textContent = "";
+}
+
+function normalizeText(s){
+  return String(s || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function localDateKey(dt){
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getHourCutoff(now = new Date()){
+  const cutoff = new Date(now);
+  cutoff.setSeconds(0, 0);
+
+  if(cutoff.getMinutes() <= 50){
+    cutoff.setMinutes(0, 0, 0);
+  }else{
+    cutoff.setHours(cutoff.getHours() + 1, 0, 0, 0);
+  }
+  return cutoff;
+}
+
+function filterFutureHours(hours, now = new Date()){
+  const cutoff = getHourCutoff(now);
+  return (hours || []).filter(h => {
+    const dt = new Date(h.time_local || "");
+    if(isNaN(dt)) return false;
+    return dt >= cutoff;
+  });
+}
+
+function buildDayMap(hours){
+  const dayMap = new Map();
+  for(const h of hours){
+    const dt = new Date(h.time_local || "");
+    if(isNaN(dt)) continue;
+    const key = localDateKey(dt);
+    if(!dayMap.has(key)) dayMap.set(key, []);
+    dayMap.get(key).push(h);
+  }
+  const keys = Array.from(dayMap.keys()).sort();
+  return {dayMap, keys};
+}
+
+
+function isDayHour(h){
+  if(typeof h?.is_day === "boolean") return h.is_day;
+  if(typeof h?.is_day === "number") return !!h.is_day;
+  const hourStr = String(h?.hour || "").slice(0,2);
+  const hh = parseInt(hourStr, 10);
+  if(Number.isFinite(hh)) return hh >= 7 && hh <= 18;
+  const dt = new Date(h?.time_local || "");
+  if(!isNaN(dt)){
+    const hours = dt.getHours();
+    return hours >= 7 && hours <= 18;
+  }
+  return false;
+}
+
+function cloudPercent(h){
+  const raw = Number(h?.cloud_frac);
+  if(!isFinite(raw)) return null;
+  if(raw <= 1.0001) return raw * 100;
+  return raw;
+}
+
+function sumPrecip(hours){
+  return hours.reduce((acc, h) => {
+    const v = Number(h?.precip1h_mm ?? 0);
+    return acc + (isFinite(v) ? v : 0);
+  }, 0);
+}
+
+function countSunnyHours(hours){
+  return hours.reduce((acc, h) => {
+    const cloud = cloudPercent(h);
+    if(!isDayHour(h) || cloud === null) return acc;
+    return acc + (cloud <= 20 ? 1 : 0);
+  }, 0);
+}
+
+function maxGust(hours){
+  return hours.reduce((max, h) => {
+    const v = Number(h?.gust_kmh ?? NaN);
+    return isFinite(v) ? Math.max(max, v) : max;
+  }, -Infinity);
+}
+
+function fmtGustSummary(v){
+  const n = Number(v);
+  if(!isFinite(n) || n < 0) return '—';
+  return `${Math.round(n)} km/h`;
+}
+
+function gustSummaryHTML(v){
+  const safe = Number(v);
+  if(!isFinite(safe) || safe < 0) return '—';
+  return `<span class="${gustClass(safe)}">${fmtGustSummary(safe)}</span>`;
+}
+
+function fmtMm(v){
+  const n = Number(v ?? 0);
+  if(!isFinite(n)) return "—";
+  return `${n.toFixed(1)} mm`;
+}
+
+function fmtHours(v){
+  const n = Number(v ?? 0);
+  if(!isFinite(n)) return "—";
+  return `${Math.round(n)} ч`;
+}
+
+function renderSummary(dayKey, dayMap){
+  const dayHours = dayMap.get(dayKey) || [];
+  const allHours = Array.from(dayMap.values()).flat();
+
+  const precipDay = fmtMm(sumPrecip(dayHours));
+  const precip72 = fmtMm(sumPrecip(allHours));
+  const sunDay = fmtHours(countSunnyHours(dayHours));
+  const sun72 = fmtHours(countSunnyHours(allHours));
+  const gustDay = maxGust(dayHours);
+  const gust72 = maxGust(allHours);
+
+  document.getElementById("sumPrecipInline").textContent = `${precipDay} (ден) | ${precip72} (72ч)`;
+  document.getElementById("sunHoursInline").textContent = `${sunDay} (ден) | ${sun72} (72ч)`;
+  document.getElementById("maxGustInline").innerHTML = `${gustSummaryHTML(gustDay)} (ден) | ${gustSummaryHTML(gust72)} (72ч)`;
+}
+
+
+function renderDay(dayKey, dayMap){
+  const hours = dayMap.get(dayKey) || [];
+  const dayTitle = document.getElementById("dayTitle");
+  dayTitle.textContent = dayKey ? `Дата: ${keyToBG(dayKey)}` : "";
+
+  const grid = document.getElementById("dayGrid");
+  grid.innerHTML = "";
+  renderSummary(dayKey, dayMap);
+  for(const h of hours){
+    const cell = document.createElement("div");
+    cell.className = "cell";
+
+    const hour = document.createElement("div");
+    hour.className = "hour";
+    hour.textContent = h.hour;
+
+    const temp = document.createElement("div");
+    temp.className = "temp";
+    temp.innerHTML = `${Math.round(h.temp_c)}<span class="deg">°</span>`;
+
+    const iconWrap = document.createElement("div");
+    iconWrap.innerHTML = ICONS[h.icon] || ICONS.partly;
+
+    const pop = document.createElement("div");
+    pop.className = "pop";
+    pop.innerHTML = `${dropSVG()} <span>${h.pop_pct}%</span>`;
+
+    const precip = document.createElement("div");
+    precip.className = "precip";
+    const precipType = getPrecipDisplayType(h);
+
+    if(precipType === "normal"){
+      precip.innerHTML = `☔ <span>${formatPrecipMm(h.precip1h_mm)}</span>`;
+    } else if(precipType === "light"){
+      precip.innerHTML = `<span>${formatPrecipMm(h.precip1h_mm)}</span>`;
+    } else {
+      precip.innerHTML = `&nbsp;`;
+    }
+
+    const wind = document.createElement("div");
+    wind.className = "wind";
+    const dir = (h.wind_dir_deg ?? 0);
+    const spd = (h.wind_kmh ?? 0);
+    wind.innerHTML = `${windArrowSVG(dir)} <span>${Math.round(spd)} km/h</span>`;
+
+    const gust = document.createElement("div");
+    const gustVal = Number(h.gust_kmh ?? 0);
+    gust.className = `gust ${gustClass(gustVal)}`;
+    gust.innerHTML = `${gustSVG()} <span>${Math.round(gustVal)} km/h</span>`;
+
+    cell.appendChild(hour);
+    cell.appendChild(temp);
+    cell.appendChild(iconWrap.firstElementChild);
+    cell.appendChild(pop);
+    cell.appendChild(precip);
+    cell.appendChild(wind);
+    cell.appendChild(gust);
+    grid.appendChild(cell);
+  }
+}
+
+async function main(){
+  const cities = await loadCities();
+  if(!cities.length) throw new Error("cities.json няма градове");
+
+  const cityInput = document.getElementById("cityInput");
+  const cityList = document.getElementById("cityList");
+  const daySelect = document.getElementById("daySelect");
+  const selectedCity = document.getElementById("selectedCity");
+  const selectedDay = document.getElementById("selectedDay");
+  const dayTitle = document.getElementById("dayTitle");
+  const hInfo = document.getElementById("hInfo");
+  const grid = document.getElementById("dayGrid");
+
+  function cityNameById(cityId){
+    return cities.find(c => c.id === cityId)?.name || cityId;
+  }
+
+  function findCityByText(text){
+    const qv = normalizeText(text);
+    if(!qv) return null;
+    return cities.find(c =>
+      normalizeText(c.name) === qv || normalizeText(c.id) === qv
+    ) || null;
+  }
+
+  function updateSuggestions(text){
+    const qv = normalizeText(text);
+    cityList.innerHTML = "";
+    if(!qv) return;
+    const matches = cities
+      .filter(c =>
+        normalizeText(c.name).includes(qv) ||
+        normalizeText(c.id).includes(qv)
+      )
+      .slice(0, 30);
+
+    for(const c of matches){
+      const opt = document.createElement("option");
+      opt.value = c.name;
+      cityList.appendChild(opt);
+    }
+  }
+
+  let cityId = q("city");
+  if(!cityId || !cities.some(c => c.id === cityId)){
+    cityId = cities.find(c => c.id === "varna")?.id || cities[0].id;
+  }
+  cityInput.value = cityNameById(cityId);
+
+  let activeDayMap = new Map();
+
+  async function loadAndRender(nextCityId){
+    const cityName = cityNameById(nextCityId);
+    clearErr();
+    selectedCity.textContent = `Град: ${cityName}`;
+    document.getElementById("hCity").textContent = `Метеограма – ${cityName}`;
+    cityInput.value = cityName;
+
+    try{
+      const data = await loadCityJson(nextCityId);
+
+      if(Array.isArray(data.hours) && data.hours.length>0){ data.hours = data.hours.slice(1); }
+
+      const originalHours = data.hours || [];
+      const visibleHours = filterFutureHours(originalHours);
+
+      const d0 = new Date(visibleHours?.[0]?.time_local || "");
+      const d1 = new Date(visibleHours?.[visibleHours.length-1]?.time_local || "");
+      if(!isNaN(d0) && !isNaN(d1)){
+        hInfo.textContent = `Валидно: ${fmtDateTimeBG(d0)} – ${fmtDateTimeBG(d1)}`;
+      }else{
+        hInfo.textContent = "";
+      }
+
+      const {dayMap, keys} = buildDayMap(visibleHours);
+      activeDayMap = dayMap;
+
+      if(!keys.length){
+        daySelect.innerHTML = "";
+        selectedDay.textContent = "—";
+        dayTitle.textContent = "";
+        grid.innerHTML = "";
+        throw new Error("Няма оставащи валидни часове за тази метеограма");
+      }
+
+      let day = q("day");
+      if(!day || !dayMap.has(day)) day = keys[0];
+
+      daySelect.innerHTML = "";
+      for(const k of keys){
+        const opt = document.createElement("option");
+        opt.value = k;
+        opt.textContent = keyToBG(k);
+        daySelect.appendChild(opt);
+      }
+      daySelect.value = day;
+
+      setParam("city", nextCityId);
+      setParam("day", day);
+
+      selectedDay.textContent = `Избрана дата: ${keyToBG(day)}`;
+      renderDay(day, dayMap);
+      clearErr();
+    }catch(err){
+      daySelect.innerHTML = "";
+      selectedDay.textContent = "—";
+      dayTitle.textContent = "";
+      hInfo.textContent = "";
+      grid.innerHTML = "";
+      showErr(`Няма метеограма за "${cityName}"`);
+      throw err;
+    }
+  }
+
+  async function tryResolveAndLoad(){
+    const found = findCityByText(cityInput.value);
+    if(!found) return;
+    cityId = found.id;
+    await loadAndRender(cityId);
+  }
+
+  cityInput.addEventListener("input", async () => {
+    updateSuggestions(cityInput.value);
+    const found = findCityByText(cityInput.value);
+    if(!found) return;
+    if(found.id === cityId) return;
+    try{
+      await loadAndRender(found.id);
+      cityId = found.id;
+    }catch(e){}
+  });
+
+  cityInput.addEventListener("change", async () => {
+    try{
+      await tryResolveAndLoad();
+    }catch(e){}
+  });
+
+  cityInput.addEventListener("keydown", async (e) => {
+    if(e.key === "Enter"){
+      e.preventDefault();
+      try{
+        await tryResolveAndLoad();
+      }catch(e){}
+    }
+  });
+
+  cityInput.addEventListener("blur", async () => {
+    const found = findCityByText(cityInput.value);
+    if(!found) return;
+    if(found.id === cityId) return;
+    try{
+      await loadAndRender(found.id);
+      cityId = found.id;
+    }catch(e){}
+  });
+
+  daySelect.onchange = () => {
+    const day = daySelect.value;
+    if(!day) return;
+    clearErr();
+    setParam("day", day);
+    selectedDay.textContent = `Избрана дата: ${keyToBG(day)}`;
+    renderDay(day, activeDayMap);
+  };
+
+  await loadAndRender(cityId);
+}
+
+main().catch(e => {
+  if(!document.getElementById("err").textContent){
+    showErr(String(e.message || e));
+  }
+});
+
+</script>
+</body>
+</html>

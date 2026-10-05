@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Новости – Meteomaps</title>
+
+<style>
+body {
+    background: #0b132b;
+    color: #e0e6f0;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 70px auto;
+    padding: 20px;
+}
+
+.header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.back-btn {
+    background: rgba(65,150,255,0.2);
+    border: 1px solid rgba(120,180,255,0.4);
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: #eaf2ff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.update {
+    background: linear-gradient(145deg, rgba(30,50,90,0.6), rgba(15,25,50,0.8));
+    border-left: 4px solid #4da3ff;
+    padding: 25px;
+    margin-bottom: 35px;
+    border-radius: 14px;
+    line-height: 2.1;
+    font-size: 21px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.25);
+    transition: 0.2s;
+}
+
+.update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 35px rgba(0,0,0,0.4);
+}
+
+.update strong {
+    font-size: 22px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="title">Какво е новото</div>
+        <a href="index.html" class="back-btn">← Обратно към картите</a>
+    </div>
+
+    <!-- 🔥 10 април -->
+    <div class="update">
+        📅 <strong>10 април 2026</strong><br><br>
+
+        ⚠️ <strong>Спиране на WRF Симулациите:</strong><br><br>
+
+        – моделите GFS и ICON са спрени поради технически причини и няма да бъдат показвани<br>
+        – системата ще работи само с модела ALADIN <br><br>
+
+        🔧 <strong>Какво предстои:</strong><br>
+        – постепенно добавяне на нови карти от ALADIN<br>
+<br>
+
+        🎯 <strong>Цел:</strong><br>
+        по-стабилна работа и по-надеждни данни за прогнозата
+    </div>
+
+    <!-- 🔥 24 март -->
+    <div class="update">
+        📅 <strong>24 март 2026</strong><br><br>
+
+        🚀 <strong>Нова 72-часова прогнозна статистика:</strong><br><br>
+
+        📊 <strong>Добавени са нови ключови показатели:</strong><br>
+        – най-висока нестабилност (CAPE)<br>
+        – градове с най-много гръмотевични часове<br>
+        – градове със значителен валеж (&gt; 10 мм)<br><br>
+        ☀️ <strong>Добавена е нова класация:</strong><br>
+        – топ градове по слънчеви часове<br>
+        – броят се само дневни часове с облачност под 20%<br><br>
+
+        🌧️ <strong>Подобрение във валежните метрики:</strong><br>
+        – въведен е праг за по-съществен валеж (&gt; 10 мм)<br>
+        – по-ясна оценка на районите с по-значителни валежи<br><br>
+
+        🎯 <strong>Цел:</strong><br>
+        по-точна, по-чиста и по-надеждна оценка на времето за следващите 72 часа
+    </div>
+
+    <!-- 21 март -->
+    <div class="update">
+        📅 <strong>21 март 2026</strong><br><br>
+
+        ✨ <strong>Подобрение в метеограмите:</strong><br><br>
+
+        🕒 <strong>По-умно показване на часовете:</strong><br>
+        – старите часове вече се скриват автоматично<br>
+        – показват се само оставащите валидни часове от текущия момент нататък<br><br>
+
+        📆 <strong>Скриване на изминалите дати:</strong><br>
+        – датите без оставащи валидни часове вече не се показват в менюто<br>
+        – така метеограмата остава фокусирана върху актуалната прогноза<br><br>
+
+        🎯 <strong>Цел:</strong><br>
+        по-чист и по-интуитивен изглед, насочен към предстоящото време
+    </div>
+
+    <!-- 20 март -->
+    <div class="update">
+        📅 <strong>20 март 2026</strong><br><br>
+
+        ✨ <strong>Ново в метеограмите:</strong><br><br>
+
+        💧 <strong>Добавен е общ валеж:</strong><br>
+        – за избрания ден<br>
+        – за целия 72-часов период<br><br>
+
+        ☀️ <strong>Добавени са слънчеви часове:</strong><br>
+        – броят се часовете с под 20% облачност<br>
+        – показват се за деня и за периода<br><br>
+
+        🎯 <strong>Цел:</strong><br>
+        по-бърза ориентация за времето без да гледате всеки час поотделно
+    </div>
+
+</div>
+
+</body>
+</html>

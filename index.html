@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <!-- BUILD_UTC: 2026-01-01T19:48:19Z -->
+  <meta charset="UTF-8">
+<title>meteomaps.bg – Прогноза за времето, метеограми и карти за България</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="meteomaps.bg – метеорологични карти с висока резолюция за България.">
+  <style>
+    :root{
+      --bg:#050816;
+      --accent:#3ba9ff;
+      --accent2:#8a5cff;
+      --accent3:#ff7bd1;
+      --text:#f5f5f7;
+      --text-muted:#b3b7c5;
+      --card-bg:#0d1225;
+      --border-subtle:rgba(255,255,255,.08);
+      --radius-xxl:26px;
+      --shadow-soft:0 22px 45px rgba(0,0,0,.55);
+    }
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#102853 0,#050816 55%);
+      color:var(--text);
+    }
+    a{color:inherit;text-decoration:none}
+
+    header{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter:blur(18px);
+      background:linear-gradient(to bottom,rgba(5,8,22,.98),rgba(5,8,22,.86));
+      border-bottom:1px solid var(--border-subtle);
+    }
+
+    .nav{
+      max-width:none;
+      margin:0;
+      padding:10px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .logo{
+      display:flex; align-items:center; gap:10px;
+      flex:0 0 auto;
+      min-width: 260px;
+    }
+    .logo-icon{
+      width:34px; height:34px; border-radius:40%;
+      background:radial-gradient(circle,#53c5ff,#1b75ff 55%,#0b1738);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900; font-size:16px;
+      box-shadow:0 0 22px rgba(59,169,255,.75);
+    }
+    .logo-text-main{font-weight:900;font-size:17px;letter-spacing:.2px}
+    .logo-text-sub{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.3px;
+      margin-top:2px;
+      font-family:"Comic Sans MS","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+      background:linear-gradient(90deg,#73e0ff,#3ba9ff,#8a5cff,#ff7bd1);
+      -webkit-background-clip:text;
+      color:transparent;
+      text-shadow:0 0 18px rgba(59,169,255,.22);
+      white-space:nowrap;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .wx-icon{      width:26px;      height:26px;
+      flex:0 0 auto;
+      filter: drop-shadow(0 0 10px rgba(255,208,0,.25));
+    }
+    .wx-cloud{ fill: #d9dde6; }
+    .wx-rain { stroke:#5fb6ff; stroke-width:2.2; stroke-linecap:round; }
+    .wx-bolt { fill:#ffd45a; }
+
+    .nav-links{
+      display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+      justify-content:center;
+      flex:1 1 auto;
+    }
+    .nav-links a{color:var(--text-muted)}
+    .nav-links a:hover{color:var(--text)}
+
+    .demo-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid rgba(115,224,255,.55);
+      background:linear-gradient(90deg, rgba(59,169,255,.18), rgba(138,92,255,.14), rgba(255,123,209,.10));
+      color:#eaf2ff;
+      font-weight:900;
+      font-size:12px;
+      box-shadow:0 0 22px rgba(59,169,255,.12);
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .demo-pill:hover{
+      border-color: rgba(115,224,255,.85);
+      box-shadow:0 0 30px rgba(59,169,255,.22);
+    }
+
+    .nav-cta{
+      padding:7px 14px;
+      border-radius:999px;
+      border:1px solid rgba(59,169,255,.7);
+      background:radial-gradient(circle at top,rgba(59,169,255,.25),rgba(5,8,22,.9));
+      color:#fff; cursor:pointer; white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    /* ===== Sections ===== */
+    .section{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px 28px;
+    }
+
+    .section-wide{
+      max-width:none;
+      margin:0;
+      padding:10px 18px 70px;
+    }
+    .section-wide .viewer-card{
+      max-width:3200px;
+      margin:0 auto;
+    }
+
+    .spacer{height:240px}
+
+    h2{margin:10px 0 12px 0; font-size:18px}
+
+    /* ===== Viewer ===== */
+    .viewer-grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    .viewer-tabs{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-start;
+      max-width: 320px;
+    }
+    .tab-btn{
+      width:100%;
+      text-align:left;
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.6);
+      color:var(--text-muted);
+      padding:14px 14px;
+      border-radius:14px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      font-size:16px;
+      line-height:1.15;
+    }
+    .tab-btn.active{
+      border-color:rgba(59,169,255,.65);
+      color:var(--text);
+      background:linear-gradient(90deg, rgba(59,169,255,.16), rgba(138,92,255,.12));
+    }
+
+    .viewer-card{
+      border-radius:var(--radius-xxl);
+      border:1px solid var(--border-subtle);
+      background:#0d1225;
+      padding:14px;
+      box-shadow:var(--shadow-soft);
+      position:relative;
+    }
+
+    .viewer-top{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:10px;flex-wrap:wrap;margin-bottom:10px;
+    }
+    .viewer-title strong{font-size:13px;color:#e6ebff}
+
+    .viewer-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.55);
+      color:var(--text);
+      padding:8px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn:hover{border-color:rgba(255,255,255,.18)}
+    .btn-nav{
+      width:44px;height:38px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:18px;line-height:1;
+    }
+    .btn-fullscreen{
+      border-color: rgba(115,224,255,.55);
+      background: linear-gradient(90deg, rgba(59,169,255,.22), rgba(138,92,255,.18), rgba(255,123,209,.12));
+      box-shadow: 0 0 20px rgba(59,169,255,.16);
+      padding:8px 14px;
+    }
+    .btn-fullscreen:hover{
+      border-color: rgba(115,224,255,.9);
+      box-shadow: 0 0 28px rgba(59,169,255,.26);
+    }
+    
+    .model-run{display:flex;align-items:center;gap:8px;margin-left:10px;flex-wrap:wrap}
+    .btn-toggle{padding:7px 12px;border-radius:999px;font-weight:900}
+    .btn-toggle.active{
+      border-color: rgba(115,224,255,.55);
+      background: rgba(115,224,255,.16);
+    }
+    .run-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-left:6px}
+    .select-run{min-width:180px}
+
+    .select{
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.55);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+    }
+
+    .viewer-img{
+      width:100%;
+      height:auto;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.06);
+      display:block;
+      background:#060a18;
+      object-fit: contain;
+      max-height: calc(100vh - 320px);
+    }
+
+    .viewer-bottom{margin-top:10px; display:grid; gap:10px}
+    .slider-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    input[type="range"]{width:100%}
+    .frame-meta{
+      font-size:12px;color:var(--text-muted);
+      display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+
+    /* ===== About + Demo stacked ===== */
+    .section-wide-block{
+      max-width:none;
+      margin:0;
+      padding:18px 24px 28px;
+    }
+    .wide-inner{
+      max-width:1500px;
+      margin:0 auto;
+    }
+
+    .card{
+      background:var(--card-bg);
+      border-radius:16px;
+      padding:22px;
+      border:1px solid var(--border-subtle);
+    }
+    .card p{margin:0;font-size:14px;line-height:1.55;color:#e7ebff}
+
+    .stack{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+
+    .info-callout{
+      margin-top:14px;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid rgba(115,224,255,.35);
+      background:linear-gradient(90deg, rgba(59,169,255,.12), rgba(138,92,255,.10), rgba(255,123,209,.08));
+      color:#eaf2ff;
+      box-shadow:0 12px 26px rgba(0,0,0,.35);
+      font-weight:800;
+    }
+    .info-callout a{
+      color:#dff6ff;
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+
+    .demo-card{
+      border-radius:18px;
+      border:1px solid var(--border-subtle);
+      background:#0d1225;
+      padding:14px;
+      box-shadow:0 12px 26px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .demo-title{
+      display:flex;align-items:center;gap:8px;
+      font-weight:900;
+      margin:0;
+      color:#eaf2ff;
+      font-size:15px;
+    }
+    .demo-title .tag{
+      font-size:11px;
+      font-weight:900;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(115,224,255,.55);
+      background:rgba(59,169,255,.10);
+      color:#dff6ff;
+    }
+    .demo-card img{
+      display:block;
+      width:100%;
+      height:auto;
+      border-radius:12px;
+      margin-top:12px;
+    }
+
+    .footer-inner{
+      max-width:none;
+      margin:0;
+      padding:14px 24px;
+      font-size:12px;
+      color:var(--text-muted);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 1200px){
+      .viewer-grid{grid-template-columns:1fr}
+      .viewer-tabs{max-width:none;flex-direction:row;flex-wrap:wrap}
+      .tab-btn{width:auto}
+      .spacer{height:120px}
+      .demo-pill{display:none}
+      .viewer-img{max-height: calc(100vh - 360px);}
+      #viewerCard:fullscreen .viewer-img{max-height: calc(100vh - 220px);}
+      .wide-inner{max-width: 100%;}
+      .premium-grid{grid-template-columns:1fr;}
+    }
+  
+/* === UI size tweaks (requested) === */
+.viewer-controls{gap:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.viewer-controls::-webkit-scrollbar{height:8px}
+.viewer-controls::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+.btn{padding:10px 16px;font-size:14px;border-radius:14px}
+.btn-nav{padding:10px 14px;min-width:44px}
+.btn-toggle{padding:8px 12px;font-size:13px}
+.select{padding:10px 12px;font-size:14px}
+.run-label{font-size:13px;margin-left:10px}
+.model-run{gap:8px;margin-left:10px;flex-wrap:nowrap}
+.tab-btn{font-size:18px;padding:16px 16px}
+
+    .btn:disabled{ opacity:.45; cursor:not-allowed; filter:grayscale(1); }
+    .btn:disabled:hover{ transform:none; box-shadow:none; }
+
+    .tabs-section-title{
+      width:100%;
+      margin-top:12px;
+      padding:8px 8px 2px;
+      font-weight:900;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--text-muted);
+      border-top:1px solid var(--border-subtle);
+    }
+
+/* TEMP: Hide custom maps safely (disabled) */
+
+    /* ===== YouTube CTA banner ===== */
+    .yt-banner{
+      margin-top:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:linear-gradient(90deg, rgba(255,0,0,.16), rgba(59,169,255,.14), rgba(138,92,255,.12));
+      box-shadow:0 14px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .yt-banner a{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+    }
+    .yt-banner .yt-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .yt-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;height:34px;
+      border-radius:10px;
+      background:rgba(255,0,0,.75);
+      box-shadow:0 0 18px rgba(255,0,0,.22);
+      flex:0 0 auto;
+      font-size:18px;
+      line-height:1;
+    }
+    .yt-text{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .yt-text .title{
+      font-size:14px;
+      letter-spacing:.1px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .yt-text .link{
+      font-size:12px;
+      color:rgba(245,245,247,.78);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .yt-cta{
+      flex:0 0 auto;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      font-size:12px;
+      font-weight:900;
+      opacity:.95;
+      white-space:nowrap;
+    }
+    .yt-banner a:hover{
+      filter:brightness(1.08);
+    }
+
+
+    /* ===== Meteogram CTA (compact) ===== */
+    .meteogram-cta{
+      margin-top:10px;
+      width:100%;
+    }
+    .meteogram-cta a{
+      display:block;
+      text-align:center;
+      padding:12px 14px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:14px;
+      background:linear-gradient(90deg, rgba(59,169,255,.35), rgba(138,92,255,.28));
+      border:1px solid rgba(115,224,255,.55);
+      color:#fff;
+      text-decoration:none;
+      box-shadow:0 0 18px rgba(59,169,255,.25);
+    }
+    .meteogram-cta a:hover{
+      filter:brightness(1.08);
+    }
+
+
+    /* ===== AI Forecast CTA ===== */
+    .ai-forecast-cta{
+      margin-top:10px;
+      width:100%;
+    }
+    .ai-forecast-cta a{
+      display:block;
+      text-align:center;
+      padding:13px 14px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:15px;
+      background:linear-gradient(90deg, rgba(255,123,209,.42), rgba(138,92,255,.34), rgba(59,169,255,.34));
+      border:1px solid rgba(255,123,209,.65);
+      color:#fff;
+      text-decoration:none;
+      box-shadow:0 0 20px rgba(255,123,209,.22);
+    }
+    .ai-forecast-cta a:hover{
+      filter:brightness(1.08);
+      box-shadow:0 0 28px rgba(255,123,209,.32);
+    }
+
+
+    /* ===== CLEAN PROMO BANNER ===== */
+.outage-banner{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:16px 20px;
+  font-weight:900;
+  letter-spacing:.02em;
+  font-size:18px;
+  line-height:1.3;
+  color:#ffffff;
+  background:transparent;
+  text-align:center;
+}
+
+.outage-banner .promo-text{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.outage-banner .promo-link{
+  color:#4da3ff;
+  text-decoration:none;
+  font-weight:900;
+}
+
+.outage-banner .promo-link:hover{
+  text-decoration:underline;
+}
+
+.outage-banner .promo-head{
+  color:#FFD54F;
+  font-weight:900;
+  margin-right:4px;
+}
+.outage-banner .promo-link-strong{
+  text-decoration:none;
+  font-weight:900;
+  transition:filter .18s ease, text-shadow .18s ease, transform .18s ease, opacity .18s ease;
+}
+.outage-banner .promo-link-strong:hover{
+  filter:brightness(1.12);
+  text-shadow:0 0 14px currentColor, 0 0 28px currentColor;
+}
+.outage-banner .promo-link-novosti{
+  color:#7CFFD8;
+  animation:promoGlow 1.8s ease-in-out infinite;
+}
+.outage-banner .promo-link-stats{
+  color:#00E5FF;
+}
+.outage-banner .promo-link-meteogram{
+  color:#FF6EC7;
+}
+@keyframes promoGlow{
+  0%,100%{
+    text-shadow:0 0 8px rgba(124,255,216,.35), 0 0 18px rgba(124,255,216,.18);
+    filter:brightness(1);
+  }
+  50%{
+    text-shadow:0 0 14px rgba(124,255,216,.75), 0 0 30px rgba(124,255,216,.45);
+    filter:brightness(1.16);
+  }
+}
+
+@media (max-width: 900px){
+  .outage-banner{
+    font-size:16px;
+    padding:14px 12px;
+  }
+}
+
+@media (max-width: 600px){
+  .outage-banner{
+    font-size:15px;
+  }
+}
+
+      .outage-banner .promo-icon{
+        display:none;
+      }
+    }
+
+</style>
+
+<script>
+function __runsV2Normalize(data){
+  // return { runs:[{id,label}], latestId:null|string }
+  let runs = [];
+  let latestId = null;
+
+  if(Array.isArray(data)){
+    runs = data.map(x => ({id:String(x), label:String(x)}));
+    latestId = runs.length ? runs[runs.length-1].id : null;
+    return { runs, latestId };
+  }
+
+  if(data && Array.isArray(((data.__runs)||data.runs))){
+    runs = ((data.__runs)||data.runs).map(r => {
+      if(typeof r === 'string') return { id: String(r), label: String(r) };
+      const id = r && r.id ? String(r.id) : "";
+      const label = r && r.label ? String(r.label) : id;
+      return { id, label };
+    }).filter(x => x.id);
+
+    // prefer real run ids
+    latestId = (data.latest_12z && String(data.latest_12z)) ||
+               (data.latest_00z && String(data.latest_00z)) ||
+               (data.latest && String(data.latest).match(/^\d{8}_\d{2}z$/i) ? String(data.latest) : null) ||
+               (runs.length ? runs[runs.length-1].id : null);
+
+    return { runs, latestId };
+  }
+
+  return { runs: [], latestId: null };
+}
+
+  function closeCustomGate(){
+    const demo = document.getElementById('demoWrapper');
+    if(demo) demo.style.display = 'block';
+
+    const o = document.getElementById("customGateOverlay");
+    if(o) o.style.display = "none";
+    // return to home / reset hash
+    if(location.hash) location.hash = "";
+  }
+</script>
+
+<script>console.log('BUILD_UTC: 2026-01-01T19:48:19Z');
+  function closeCustomGate(){
+    const demo = document.getElementById('demoWrapper');
+    if(demo) demo.style.display = 'block';
+
+    const o = document.getElementById("customGateOverlay");
+    if(o) o.style.display = "none";
+    // return to home / reset hash
+    if(location.hash) location.hash = "";
+  }
+</script>
+
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a href="#top" class="logo" aria-label="meteomaps.bg">
+      <div class="logo-icon">M</div>
+      <div>
+        <div class="logo-text-main">meteomaps.bg</div>
+        <div class="logo-text-sub">
+          Карти и бурно време
+          <!-- Cloud + rain + lightning (standard gray cloud + yellow bolt) -->
+          <svg class="wx-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path class="wx-cloud" d="M24 49h24c8 0 14-5.5 14-13s-6-13-14-13c-1.2 0-2.4.1-3.5.4C41.6 17 36.6 13 30.5 13 23.9 13 18.4 18 17.7 24.5 11.3 25.7 6 31.4 6 38c0 6.6 5.4 11 12 11h6z"/>
+            <path class="wx-rain" d="M22 54l-4 6M34 54l-4 6M46 54l-4 6"/>
+            <path class="wx-bolt" d="M36 34l-8 14h6l-4 10 14-18h-7l5-6z"/>
+          </svg>
+        </div>
+      </div>
+    </a>
+
+    <div class="nav-links">
+      <a href="#viewer">Карти</a>
+      <a href="#about">За нас</a>
+      <a href="#contact">Контакт</a>
+      <a href="https://www.youtube.com/@supercell7" target="_blank" rel="noopener">YouTube</a>
+      <a class="demo-pill" href="#demo15" title="Демо карта 0.5 км" style="display:none">✨ Демо 0.5 км</a>
+    </div>
+
+    <button class="nav-cta" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+      📩 Пиши ни
+    </button>
+  </div>
+
+<div class="outage-banner" id="outageBanner">
+  <span class="promo-icon">📍</span>
+  <div class="promo-text">
+    <span style="font-weight:700; font-size:16px;">
+      <span class="promo-head">ВИЖ:</span>
+      <a href="novosti.html" class="promo-link-strong promo-link-novosti">Нови функции в сайта</a>
+      <span style="color:#cccccc;"> • </span>
+      <a href="stats-72h.html" class="promo-link-strong promo-link-stats">3-дневна прогнозна статистика</a>
+      <span style="color:#cccccc;"> • </span>
+      <a href="meteogram.html" class="promo-link-strong promo-link-meteogram">почасова прогноза за всички градове</a>
+      <span style="color:#ffffff;"> 🇧🇬</span>
+    </span>
+  </div>
+  <span class="promo-icon">⚡</span>
+</div>
+
+</header>
+
+<main id="top">
+
+  <section class="section section-wide" id="viewer">
+    <h2>Метеорологични карти с висока резолюция</h2>
+
+    <div class="viewer-grid">
+      <div class="viewer-tabs" role="tablist" aria-label="Избор на тип карти">
+        <button class="tab-btn active" data-key="temp_2m" role="tab">🌡️ Температура на 2 м</button>
+        <button class="tab-btn" data-key="t850" role="tab" style="display:none;">🌡️ Температура на 850 hPa</button>
+        <button class="tab-btn" data-key="simulated.visible" role="tab">🌤️ Облачност</button>
+        <button class="tab-btn" data-key="radar.reflectivity" role="tab" style="display:none;">📡 Радарна рефлективност</button>
+        <button class="tab-btn" data-key="precip_1h" role="tab">🌧️ Валеж (1 час)</button>
+        <button class="tab-btn" data-key="acc.precip" role="tab">🌧️ Акумулирани валежи</button>
+        <button class="tab-btn" data-key="freezing.rain" role="tab" style="display:none;">🧊 Леден дъжд</button>
+                <button class="tab-btn" data-key="snowrate" role="tab" style="display:none;">🌨️ Интензитет на снеговалежа</button>
+<button class="tab-btn" data-key="snow.depth" role="tab" style="display:none;">❄️ Снежна покривка</button>
+        <button class="tab-btn" data-key="wind_gusts" role="tab">💨 Пориви на вятъра</button>
+                <button class="tab-btn" data-key="bulk_shear06km" role="tab" style="display:none;">🌀 Срез на вятъра 0–6 км</button>
+        <button class="tab-btn" data-key="jetstream300" role="tab" style="display:none;">🛰️ Струйно течение 300 hPa</button>
+<button class="tab-btn" data-key="storm.energy" role="tab">⚡ Енергия за бури</button>
+<label style="width:100%; display:none; flex-direction:column; gap:6px; margin-top:6px;">
+<select class="select" id="extraMapsSelect" style="width:100%;">
+            <option value="" selected>Виж още карти…</option>
+            <option value="radar.reflectivity.lowlevel">• Рефлективност на ниско ниво (~1 км)</option>
+            <option value="cape.shear">• ⛈️ Индекс на нестабилност</option>
+          </select>
+        </label>
+
+<div class="meteogram-cta">
+  <a href="meteogram.html">🏙️ Прогноза по градове</a>
+</div>
+
+<div class="ai-forecast-cta">
+  <a href="stats-72h.html">✨ 3 дневна прогнозна статистика</a>
+</div>
+
+
+</div>
+
+      <div class="viewer-card" id="viewerCard">
+        <div class="viewer-top">
+          <div class="viewer-title">
+            <strong id="viewerTitle">🌡️ Температура на 2 м</strong>
+          </div>
+
+          <div class="viewer-controls">
+            <button class="btn btn-nav" id="btnPrev" title="Предна карта">&lt;</button>
+            <button class="btn" id="btnPlay" title="Пусни/Спри">▶</button>
+            <button class="btn btn-nav" id="btnNext" title="Следваща карта">&gt;</button>
+            <div class="model-run" aria-label="Източник и рън">
+              <button class="btn btn-toggle active" id="btnModelALADIN" type="button" title="Aladin">Aladin</button>
+              <button class="btn btn-toggle" id="btnModelICON" type="button" title="WRF ICON" style="display:none;">WRF ICON</button>
+              <button class="btn btn-toggle" id="btnModelGFS" type="button" title="WRF GFS" style="display:none;">WRF GFS</button>
+
+              <label class="run-label" title="Избери рън">
+                Run
+                <select class="select select-run" id="runSelect"></select>
+              </label>
+
+              <label class="run-label" title="Избор на регион">
+                Регион
+                <select class="select" id="regionSelect">
+                  <option value="bg" selected>🇧🇬 България (2км) </option>
+                  <option value="varna" style="display:none">✨Демо (0.5 км)</option>
+                </select>
+              </label>
+            </div>
+
+
+            <button class="btn btn-fullscreen" id="btnFs" title="На цял екран (F)">На цял екран</button>
+
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
+              Скорост
+              <select class="select" id="speedSelect">
+                <option value="50">0.05s</option>
+                <option value="80">0.08s</option>
+                <option value="120">0.12s</option>
+                <option value="160">0.16s</option>
+                <option value="200">0.20s</option>
+                <option value="250">0.25s</option>
+                <option value="320" selected>0.32s</option>
+                <option value="400">0.40s</option>
+                <option value="600">0.60s</option>
+                <option value="900">0.90s</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <img id="viewerImg" class="viewer-img" src="" alt="WRF карта" loading="eager">
+
+        <div class="yt-banner" id="ytBanner">
+          <a href="https://www.youtube.com/@supercell7">
+            <div class="yt-left">
+              <div class="yt-badge">▶</div>
+              <div class="yt-text">
+                <div class="title">🎥 Виж подробен анализ с картите в YouTube</div>
+                <div class="link">youtube.com/@supercell7</div>
+              </div>
+            </div>
+            <div class="yt-cta">Отвори канала →</div>
+          </a>
+        </div>
+
+
+        <div class="viewer-bottom">
+          <div class="slider-row">
+            <input id="frameRange" type="range" min="1" max="30" value="1" step="1" />
+            <div style="font-size:12px;color:var(--text-muted);min-width:92px;text-align:right;">
+              <span id="frameCounter">1 / 30</span>
+            </div>
+          </div>
+
+          <div class="frame-meta">
+            <div>Файл: <span id="frameFile" style="color:#e6ebff;"></span></div>
+            <div id="frameNote"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="section-wide-block" id="about">
+    <div class="wide-inner">
+      <h2>За meteomaps.bg</h2>
+
+      <div class="stack">
+        <div class="card">
+          <p>
+            Ние показваме метеорологични карти с висока резолюция за България, които са особено полезни при изготвянето на прогнози при
+            зимни обстановки, летни бури и екстремни явления.
+          </p>
+
+          <div class="info-callout">
+            🔎 За запитване за <strong>супер детайлни карти</strong> за конкретен град/регион – пишете ни на
+            <a href="mailto:skyreader@abv.bg">skyreader@abv.bg</a>.
+          </div>
+        </div>
+
+        <div class="demo-card" id="demo15" style="display:none">
+          <p class="demo-title"><span>✨ Демо карта</span> <span class="tag">0.5 км</span></p>
+          <img src="accum_demo_1p5km.png" alt="Демо карта 0.5 км WRF над България">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-wide-block" id="contact">
+    <div class="wide-inner">
+      <h2>Контакт</h2>
+      <div class="card">
+        <p style="margin:0 0 8px 0;">📧 Имейл: <strong>skyreader@abv.bg</strong></p>
+        <p style="margin:0;">▶ YouTube канал: <a href="https://www.youtube.com/@supercell7" target="_blank" style="color:#3ba9ff;">https://www.youtube.com/@supercell7</a></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    © <span id="year"></span> meteomaps.bg
+    <a href="#top">Начало</a>
+  </div>
+
+<!-- DEMO VIEW FOR CUSTOM MAP -->
+<style>
+#demoWrapper{
+  display:none;
+  max-width:1200px;
+  margin:40px auto 0;
+  text-align:center;
+}
+#demoTitle{
+  font-size:38px;
+  font-weight:900;
+  margin: 6px 0 22px;
+  letter-spacing:.4px;
+  text-align:center;
+  background: linear-gradient(90deg,#73e0ff,#3ba9ff,#8a5cff,#ff7bd1);
+  -webkit-background-clip:text;
+  color:transparent;
+  text-shadow: 0 0 22px rgba(59,169,255,.25);
+}
+@media (max-width:900px){
+  #demoTitle{font-size:28px;}
+}
+#demoImage{
+  max-width:100%;
+  border-radius:18px;
+  box-shadow:0 25px 60px rgba(0,0,0,.55);
+}
+</style>
+
+<div id="demoWrapper">
+  <div id="demoTitle">ДЕМО ПРИМЕР – Интензитет на снеговалежа</div>
+  <img id="demoImage" src="/maps/demo/snow_intensity_demo.png" alt="Demo snow intensity map">
+</div>
+
+</footer>
+
+<script>
+function bust(url){
+  try {
+    const u = new URL(url, location.origin);
+    u.searchParams.set('v', Date.now().toString());
+    return u.pathname + '?' + u.searchParams.toString();
+  } catch(e) {
+    const sep = (url.includes('?') ? '&' : '?');
+    return url + sep + 'v=' + Date.now();
+  }
+}
+
+  function closeCustomGate(){
+    const demo = document.getElementById('demoWrapper');
+    if(demo) demo.style.display = 'block';
+
+    const o = document.getElementById("customGateOverlay");
+    if(o) o.style.display = "none";
+    // return to home / reset hash
+    if(location.hash) location.hash = "";
+  }
+</script>
+
+<script>// ===== meteomaps.bg viewer (clean rebuild) =====
+
+document.getElementById("year").textContent = new Date().getFullYear();
+
+function bust(url){
+  try{
+    const u = new URL(url, location.origin);
+    u.searchParams.set("v", String(Date.now()));
+    return u.pathname + "?" + u.searchParams.toString();
+  }catch(e){
+    return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+  }
+}
+
+async function fetchJSON(url){
+  const r = await fetch(bust(url), { cache: "no-store" });
+  if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+
+  // Cloudflare/SPA fallback can return HTML with 200 -> JSON.parse dies.
+  // Guard it and show a meaningful message instead.
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  if(!ct.includes("application/json")){
+    const t = (await r.text()).slice(0, 120).replace(/\s+/g, " ");
+    throw new Error(`Очаквах JSON, но получих "${ct || "unknown"}" за ${url}. Пример: ${t}`);
+  }
+  return await r.json();
+}
+
+async function existsJSON(url){
+  try{
+    const r = await fetch(bust(url), { cache: "no-store" });
+    if(!r.ok) return false;
+    const t = await r.text();
+    JSON.parse(t);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+
+function getModelFallbackOrder(startModel){
+  return ["ALADIN"];
+}
+
+async function ensureRunHasVar(){
+  // Only use ALADIN. If current run lacks the selected variable, find the newest ALADIN run that has it.
+  const want = `${MAPS_ROOT}/${currentRun}/ALADIN/${currentVar}/maps.json`;
+  if(await existsJSON(want)) return true;
+
+  const opts = Array.from(runSelect.options || []);
+  for(const opt of opts){
+    const rid = opt.value;
+    const u = `${MAPS_ROOT}/${rid}/ALADIN/${currentVar}/maps.json`;
+    if(await existsJSON(u)){
+      currentRun = rid;
+      runSelect.value = rid;
+      if(currentModel !== "ALADIN") setModel("ALADIN", {skipReload:true});
+      return true;
+    }
+  }
+  return false;
+}
+
+async function existsJSON(url){
+  try{
+    const r = await fetch(bust(url), { cache: "no-store" });
+    if(!r.ok) return false;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    if(!ct.includes("application/json")) return false;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+let MAPS_ROOT = "/maps/runs";
+
+// 0 = показва всичко, 1 = маха първия кадър, 2 = маха първите два кадъра и т.н.
+const SKIP_FIRST_FRAMES = 1;
+
+const VARS = {
+  "temp_2m":     { title: "🌡️ Температура на 2 м" },
+  "acc.precip":  { title: "🌧️ Акумулирани валежи" },
+  "wind_gusts":  { title: "💨 Пориви на вятъра" },
+  "bulk_shear06km": { title: "🌀 Bulk Shear 0–6 км" },
+  "jetstream300":  { title: "🛰️ Jet Stream 300 hPa" },
+  "t850":        { title: "🌡️ Температура на 850 hPa" },
+  "snow.depth":  { title: "❄️ Снежна покривка" },
+  "freezing.rain": { title: "🧊 Леден дъжд" },
+  "snowrate":    { title: "🌨️ Интензитет на снеговалежа" },
+  "precip_1h":     { title: "🌧️ Валеж (1 час)" },
+  "storm.energy":  { title: "⚡ Енергия за бури" },
+  "simulated.visible": { title: "🌤️ Облачност" },
+  "radar.reflectivity": { title: "📡 Радарна рефлективност" }
+
+};
+
+let currentVar   = "temp_2m";
+let currentModel = "ALADIN";   // ICON | GFS | ALADIN
+let currentRun   = null;    // real run id string (e.g. 20260101_00z)
+let latestRunId  = null;
+
+let frames = [];
+let frameIdx = 0;
+let prevFrameName = "";
+let timer = null;
+
+const elImg        = document.getElementById("viewerImg");
+const elTitle      = document.getElementById("viewerTitle");
+const elRange      = document.getElementById("frameRange");
+const elCounter    = document.getElementById("frameCounter");
+const elFile       = document.getElementById("frameFile");
+const elNote       = document.getElementById("frameNote");
+  /* ===== CUSTOM MAP ACCESS (session-only) =====
+     - For vars in CUSTOM_VARS, visitors see a demo image.
+     - Full access requires Alt+M -> code "Varna2005" (stored in sessionStorage).
+  */
+  const CUSTOM_VARS = new Set([]);
+  const MASTER_CODE = "CHANGE_ME_MASTER_CODE";
+  const MASTER_STORE_KEY = "mm_master_ok"; // session-only
+
+
+
+
+  
+  /* ===== PREMIUM (Day 2–5) ACCESS GATE (frontend-only) =====
+     - Free: up to +24h
+     - Premium: +25h to +120h (5-day)
+     - Shows modal and blocks viewer navigation past free limit.
+  */
+  const PREMIUM_FREE_HOURS = 999;
+
+  function getPremiumLocal(){
+    try{
+      const h = localStorage.getItem(PREMIUM_LS_HASH_KEY) || "";
+      const until = localStorage.getItem(PREMIUM_LS_UNTIL_KEY) || "";
+      return {hash: h, until_utc: until};
+    }catch(e){
+      return {hash:"", until_utc:""};
+    }
+  }
+  function clearPremiumLocal(){
+    try{
+      localStorage.removeItem(PREMIUM_LS_HASH_KEY);
+      localStorage.removeItem(PREMIUM_LS_UNTIL_KEY);
+    }catch(e){}
+  }
+  function parseUtcIso(s){
+    return Date.parse(s);
+  }
+  function isPremiumLocalValid(){
+    const p = getPremiumLocal();
+    if(!p.hash || !p.until_utc) return false;
+    const untilMs = parseUtcIso(p.until_utc);
+    if(!Number.isFinite(untilMs)) return false;
+    return Date.now() < untilMs;
+  }
+
+  async function sha256Hex(str){
+    const enc = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    const arr = Array.from(new Uint8Array(buf));
+    return arr.map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+
+  async function fetchPremiumCodes(){
+    const url = PREMIUM_CODES_URL + "?v=" + Date.now();
+    const r = await fetch(url, {cache: "no-store"});
+    if(!r.ok) throw new Error("codes_fetch_failed");
+    return await r.json();
+  }
+
+  async function validateCodeOnline(code){
+    const codeTrim = String(code||"").trim();
+    if(!codeTrim) return {ok:false, reason:"empty"};
+    const h = await sha256Hex(codeTrim);
+    const data = await fetchPremiumCodes();
+    const list = (data && data.codes) ? data.codes : [];
+    const rec = list.find(x => (x && x.hash) === h);
+    if(!rec) return {ok:false, reason:"not_found"};
+    const until = rec.valid_until_utc;
+    const untilMs = parseUtcIso(until);
+    if(!Number.isFinite(untilMs)) return {ok:false, reason:"bad_until"};
+    if(Date.now() >= untilMs) return {ok:false, reason:"expired"};
+    return {ok:true, hash:h, until_utc:until};
+  }
+
+  async function isPremiumUnlocked(){
+    if(!isPremiumLocalValid()) return false;
+    try{
+      const p = getPremiumLocal();
+      const data = await fetchPremiumCodes();
+      const list = (data && data.codes) ? data.codes : [];
+      const rec = list.find(x => (x && x.hash) === p.hash);
+      if(!rec) { clearPremiumLocal(); return false; }
+      const untilMs = parseUtcIso(rec.valid_until_utc);
+      if(!Number.isFinite(untilMs) || Date.now() >= untilMs){ clearPremiumLocal(); return false; }
+      try{ localStorage.setItem(PREMIUM_LS_UNTIL_KEY, rec.valid_until_utc); }catch(e){}
+      return true;
+    }catch(e){
+      return true; // offline fallback
+    }
+  }
+
+  function setPremiumUnlocked(hash, until_utc){
+    try{
+      localStorage.setItem(PREMIUM_LS_HASH_KEY, hash);
+      localStorage.setItem(PREMIUM_LS_UNTIL_KEY, until_utc);
+    }catch(e){}
+  }
+
+  const PREMIUM_PRICE_EUR_PER_MONTH = 10;
+  const PREMIUM_CONTACT_EMAIL = "skyreader@abv.bg";
+  const PREMIUM_CODES_URL = "premium_codes.json";
+  const PREMIUM_LS_HASH_KEY = "mm_premium_hash";
+  const PREMIUM_LS_UNTIL_KEY = "mm_premium_until_utc";
+
+
+  function parseForecastHourFromFilename(fn){
+    if(!fn || typeof fn !== "string") return null;
+    // common patterns: f024.png, _f024_, f024h, etc.
+    let m = fn.match(/(?:^|[_\-])f(\d{1,4})(?:[_\-\.]|$)/i);
+    if(m) return parseInt(m[1],10);
+    // pattern: ..._024h...
+    m = fn.match(/(?:^|[_\-])(\d{1,4})h(?:[_\-\.]|$)/i);
+    if(m) return parseInt(m[1],10);
+    return null;
+  }
+
+  function currentFrameLeadHours(){
+    if(!frames || !frames.length) return 0;
+    const fn = frames[frameIdx];
+    const h = parseForecastHourFromFilename(fn);
+    if(Number.isFinite(h)) return h;
+
+    // Fallback: assume 1-hourly frames if we can't parse filename.
+    // This is best-effort and keeps UX consistent.
+    return frameIdx;
+  }
+
+  function ensurePremiumGateDom(){
+    if (document.getElementById("premiumGateOverlay")) return;
+
+    const st = document.createElement("style");
+    st.textContent = `
+      #premiumGateOverlay{
+        position:fixed; inset:0; z-index:99999;
+        display:none; align-items:center; justify-content:center;
+        background:rgba(0,0,0,.72);
+        backdrop-filter: blur(7px);
+        padding:24px;
+      }
+      #premiumGateCard{
+        width:min(980px, 96vw);
+        border-radius:24px;
+        background:linear-gradient(180deg, rgba(18,24,52,.98), rgba(10,14,32,.98));
+        border:1px solid rgba(255,255,255,.14);
+        box-shadow:0 30px 90px rgba(0,0,0,.75);
+        padding:22px 22px 18px 22px;
+      }
+      #premiumGateTitle{
+        font-weight:900;
+        font-size:22px;
+        letter-spacing:.2px;
+        display:flex; align-items:center; gap:10px;
+      }
+      #premiumGateText{
+        margin-top:10px;
+        font-size:17px;
+        line-height:1.45;
+        color:rgba(245,245,247,.92);
+      }
+      #premiumGatePrice{
+        margin-top:12px;
+        font-size:20px;
+        font-weight:900;
+        color:#fff;
+      }
+      #premiumGateEmail{
+        margin-top:10px;
+        font-size:18px;
+        font-weight:900;
+        word-break:break-word;
+        color:#fff;
+      }
+      #premiumGateNote{
+        margin-top:10px;
+        font-size:13px;
+        color:rgba(245,245,247,.55);
+      }
+      #premiumGateActions{
+        margin-top:16px;
+        display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end;
+      }
+      .premiumGateBtn{
+        cursor:pointer;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.16);
+        background:rgba(255,255,255,.06);
+        color:#fff;
+        padding:10px 14px;
+        font-weight:800;
+      }
+      .premiumGateBtn.primary{
+        background:linear-gradient(90deg, rgba(59,169,255,.9), rgba(138,92,255,.85));
+        border-color: rgba(255,255,255,.18);
+      }
+    `;
+    document.head.appendChild(st);
+
+    const overlay = document.createElement("div");
+    overlay.id = "premiumGateOverlay";
+    overlay.innerHTML = `
+      <div id="premiumGateCard" role="dialog" aria-modal="true">
+        <div id="premiumGateTitle">🔒 Премиум прогноза (ден 2–5)</div>
+        <div id="premiumGateText">
+          За достъп до <b>пълната 5-дневна WRF прогноза</b> (ден 2–5) можете да закупите <b>премиум код</b>.
+        </div>
+        <div id="premiumGatePrice">Цена: €${PREMIUM_PRICE_EUR_PER_MONTH} / месец</div>
+        <div id="premiumGateText" style="margin-top:10px">
+          За покупка или въпроси, пишете на:
+        </div>
+        <div id="premiumGateEmail">${PREMIUM_CONTACT_EMAIL}</div>
+        <div id="premiumGateNote">
+          * Забележка: Премиум достъпът се активира с код и важи 30 дни от датата на активиране.
+        </div>
+                <div id="premiumGateHaveCode" style="margin-top:14px; opacity:.95;">
+          Вече имате код? Въведете го тук:
+        </div>
+        <div id="premiumGateCodeRow" style="display:flex; gap:10px; margin-top:10px;">
+          <input id="premiumGateCodeInput" type="text" placeholder="Въведете премиум код" style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.18); color:#fff; outline:none;">
+          <button class="premiumGateBtn primary" id="premiumGateUnlock">Отключи</button>
+        </div>
+        <div id="premiumGateMsg" style="min-height:18px; margin-top:8px; font-size:12px; opacity:.85;"></div>
+
+<div id="premiumGateActions">
+          <button class="premiumGateBtn" id="premiumGateBack">Назад към безплатната прогноза</button>
+          <button class="premiumGateBtn primary" id="premiumGateCopyEmail">Копирай имейла</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", (e)=>{
+      if (e.target === overlay) closePremiumGate();
+    });
+
+    document.getElementById("premiumGateBack").addEventListener("click", ()=>{
+      closePremiumGate();
+      goToLastFreeFrame();
+    });
+
+    document.getElementById("premiumGateCopyEmail").addEventListener("click", async ()=>{
+      try{
+        await navigator.clipboard.writeText(PREMIUM_CONTACT_EMAIL);
+        alert("Имейлът е копиран.");
+      }catch(e){
+        prompt("Копирай имейла:", PREMIUM_CONTACT_EMAIL);
+      }
+    });
+
+    async function tryUnlockPremium(){
+      const inp = document.getElementById("premiumGateCodeInput");
+      const msg = document.getElementById("premiumGateMsg");
+      if(!inp) return;
+      const code = String(inp.value || "").trim();
+      if(!code){
+        if(msg) msg.textContent = "❌ Моля, въведете код.";
+        return;
+      }
+      if(msg) msg.textContent = "⏳ Проверка на кода...";
+      try{
+        const res = await validateCodeOnline(code);
+        if(res.ok){
+          setPremiumUnlocked(res.hash, res.until_utc);
+          if(msg) msg.textContent = "✅ Кодът е приет. Премиум достъпът е активиран на това устройство.";
+          closePremiumGate();
+          try{ renderCurrentFrame && renderCurrentFrame(); }catch(e){}
+          return;
+        }
+        if(res.reason === "expired"){
+          if(msg) msg.textContent = "❌ Кодът е изтекъл. Свържете се с нас за подновяване.";
+        }else{
+          if(msg) msg.textContent = "❌ Невалиден код. Проверете и опитайте отново.";
+        }
+      }catch(e){
+        if(msg) msg.textContent = "⚠️ Неуспешна проверка (възможно е да няма интернет). Опитайте отново.";
+      }
+    }
+
+    const unlockBtn = document.getElementById("premiumGateUnlock");
+    if(unlockBtn) unlockBtn.addEventListener("click", tryUnlockPremium);
+    const codeInp = document.getElementById("premiumGateCodeInput");
+    if(codeInp) codeInp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") tryUnlockPremium(); });
+  }
+
+  function openPremiumGate(){
+    if(isPremiumLocalValid()) return;
+    ensurePremiumGateDom();
+    const ov = document.getElementById("premiumGateOverlay");
+    if (ov) ov.style.display = "flex";
+  }
+function closePremiumGate(){
+    const ov = document.getElementById("premiumGateOverlay");
+    if (ov) ov.style.display = "none";
+  }
+
+  function goToLastFreeFrame(){
+    if(!frames || !frames.length) return;
+    // Find the last frame whose lead time <= 24h
+    let best = 0;
+    for(let i=0;i<frames.length;i++){
+      const h = parseForecastHourFromFilename(frames[i]);
+      const lead = Number.isFinite(h) ? h : i;
+      if(lead <= PREMIUM_FREE_HOURS) best = i;
+      else break;
+    }
+    frameIdx = Math.max(0, Math.min(best, frames.length-1));
+    try{
+      elRange.value = String(frameIdx + 1);
+    }catch(e){}
+  }
+
+  function isPremiumBlocked(){
+    const lead = currentFrameLeadHours();
+    return (lead > PREMIUM_FREE_HOURS) && !isPremiumLocalValid();
+  }
+function enforcePremiumGateIfNeeded(){
+    if(!frames || !frames.length) return false;
+    if(isPremiumBlocked()){
+      openPremiumGate();
+      goToLastFreeFrame();
+      return true;
+    }
+    return false;
+  }
+
+  function isMasterUnlocked(){
+    try { return sessionStorage.getItem(MASTER_STORE_KEY) === "1"; } catch(e){ return false; }
+  }
+  function setMasterUnlocked(v){
+    try { sessionStorage.setItem(MASTER_STORE_KEY, v ? "1" : "0"); } catch(e){}
+  }
+
+  function ensureCustomGateDom(){
+    if (document.getElementById("customGateOverlay")) return;
+
+    const st = document.createElement("style");
+    st.textContent = `
+      #customGateOverlay{
+        position:fixed; inset:0; z-index:9999;
+        display:none; align-items:center; justify-content:center;
+        background:rgba(0,0,0,.65);
+        backdrop-filter: blur(6px);
+        padding:24px;
+      }
+      #customGateCard{
+        width:min(980px, 96vw);
+        border-radius:24px;
+        background:linear-gradient(180deg, rgba(18,24,52,.96), rgba(10,14,32,.96));
+        border:1px solid rgba(255,255,255,.12);
+        box-shadow:0 30px 80px rgba(0,0,0,.65);
+        padding:22px 22px 18px 22px;
+      }
+      #customGateTitle{
+        font-weight:900;
+        font-size:22px;
+        letter-spacing:.2px;
+        display:flex; align-items:center; gap:10px;
+      }
+      #customGateText{
+        margin-top:10px;
+        font-size:18px;
+        line-height:1.35;
+        color:rgba(245,245,247,.92);
+      }
+      #customGateEmail{
+        margin-top:10px;
+        font-size:20px;
+        font-weight:900;
+        word-break:break-word;
+        color:#fff;
+      }
+      #customGateHint{
+        margin-top:10px;
+        font-size:14px;
+        color:rgba(245,245,247,.55);
+      }
+      #customGateActions{
+        margin-top:16px;
+        display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end;
+      }
+      .customGateBtn{
+        cursor:pointer;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.14);
+        background:rgba(255,255,255,.06);
+        color:#fff;
+        padding:10px 14px;
+        font-weight:800;
+      }
+      .customGateBtn.primary{
+        background:linear-gradient(90deg, rgba(59,169,255,.9), rgba(138,92,255,.85));
+        border-color: rgba(255,255,255,.18);
+      }
+    `;
+    document.head.appendChild(st);
+
+    const overlay = document.createElement("div");
+    overlay.id = "customGateOverlay";
+    overlay.innerHTML = `
+      <div id="customGateCard" role="dialog" aria-modal="true">
+        <div id="customGateTitle">🔒 Карти по поръчка</div>
+        <div id="customGateText">
+          Тази карта е по поръчка и не е публична.
+          <br><br>
+          За достъп или поръчка, пишете на:
+        </div>
+        <div id="customGateEmail">skyreader@abv.bg</div>
+        
+        <div id="customGateActions">
+          <button class="customGateBtn" id="customGateOk">Ок, разбрах</button>
+          <button class="customGateBtn primary" id="customGateUnlock">Въведи код</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", (e)=>{
+      if (e.target === overlay) closeCustomGate();
+    });
+    document.getElementById("customGateOk").addEventListener("click", closeCustomGate);
+    document.getElementById("customGateUnlock").addEventListener("click", promptForMasterCode);
+  }
+
+  function openCustomGate(){
+    ensureCustomGateDom();
+    const ov = document.getElementById("customGateOverlay");
+    if (ov) ov.style.display = "flex";
+  }
+  function closeCustomGate(){
+    const ov = document.getElementById("customGateOverlay");
+    if (ov) ov.style.display = "none";
+  }
+
+  function promptForMasterCode(){
+    const code = prompt("Въведи админ код за достъп:");
+    if (!code) return;
+    if (code.trim() === MASTER_CODE){
+      setMasterUnlocked(true);
+      closeCustomGate();
+      // try to load again now that we are unlocked
+      try { loadFrames(); } catch(e){}
+    } else {
+      alert("Грешен код.");
+    }
+  }
+
+  function showCustomDemoInViewer(){
+    // Show demo image instead of triggering maps.json fetch
+    try{
+      if (typeof viewerTitle !== "undefined") viewerTitle.textContent = "Демо пример";
+      if (typeof viewerImg !== "undefined") viewerImg.src = "/maps/demo/snow_intensity_demo.png";
+      if (typeof elNote !== "undefined") elNote.textContent = "";
+      if (typeof frameRange !== "undefined"){ frameRange.min = 0; frameRange.max = 0; frameRange.value = 0; }
+      if (typeof timeLabel !== "undefined") timeLabel.textContent = "";
+      if (typeof fileLabel !== "undefined") fileLabel.textContent = "Демо пример";
+    }catch(e){}
+  }
+
+  // Keyboard shortcut: Alt+M to unlock (session only)
+  window.addEventListener("keydown", (e)=>{
+    if (e.altKey && (e.key === "m" || e.key === "M")){
+      e.preventDefault();
+      promptForMasterCode();
+    }
+  });
+  /* ===== END CUSTOM MAP ACCESS ===== */
+
+
+const btnPrev      = document.getElementById("btnPrev");
+const btnNext      = document.getElementById("btnNext");
+const btnPlay      = document.getElementById("btnPlay");
+const btnFs        = document.getElementById("btnFs");
+const speedSelect  = document.getElementById("speedSelect");
+
+const btnModelICON = document.getElementById("btnModelICON");
+const btnModelGFS  = document.getElementById("btnModelGFS");
+const btnModelALADIN = document.getElementById("btnModelALADIN");
+const runSelect    = document.getElementById("runSelect");
+
+const regionSelect = document.getElementById("regionSelect");
+const extraMapsSelect = document.getElementById("extraMapsSelect");
+
+function setRegion(region){
+  stop();
+
+  if(region === "varna"){
+    MAPS_ROOT = "/maps/varna_500m/runs";
+  }else{
+    MAPS_ROOT = "/maps/runs";
+  }
+
+  // reset state
+  currentRun = null;
+  frames = [];
+  frameIdx = 0;
+
+  loadRuns().then(() => {
+    // keep current selections (model/var) but reload data
+    setModel(currentModel);
+    setVar(currentVar);
+  });
+}
+
+regionSelect.addEventListener("change", () => {
+  setRegion(regionSelect.value);
+});
+
+async function updateModelAvailability(preferBest){
+  const runId = currentRun || runSelect.value;
+  if(!runId) return;
+
+  const v = currentVar || Object.keys(VARS)[0] || "temp_2m";
+  const aladinOk = await existsJSON(`${MAPS_ROOT}/${runId}/ALADIN/${v}/maps.json`);
+
+  btnModelICON.disabled = true;
+  btnModelGFS.disabled = true;
+  btnModelICON.style.display = "none";
+  btnModelGFS.style.display = "none";
+
+  if(btnModelALADIN) btnModelALADIN.disabled = !aladinOk;
+  if(btnModelALADIN) btnModelALADIN.title = aladinOk ? "Aladin" : "Aladin (няма карти за този рън)";
+
+  if(currentModel !== "ALADIN") setModel("ALADIN", {skipReload:true});
+}
+
+function stop(){
+  if(timer){ clearInterval(timer); timer = null; }
+  btnPlay.textContent = "▶";
+}
+
+function play(){
+  if(timer || frames.length === 0) return;
+  btnPlay.textContent = "⏸";
+  const ms = parseInt(speedSelect.value, 10);
+  timer = setInterval(() => {
+    if(frames.length === 0) return;
+    frameIdx = (frameIdx + 1) % frames.length;
+    elRange.value = String(frameIdx + 1);
+    render();
+  }, ms);
+}
+
+function prettyRunLabel(runId){
+  // accepts: 20260101_00z or 20260101_00_res2000m
+  let m = String(runId).match(/^(\d{4})(\d{2})(\d{2})_(\d{2})z$/i);
+  if(m){
+    const [_, Y, Mo, D, H] = m;
+    return `${Y}-${Mo}-${D} ${H}Z`;
+  }
+  m = String(runId).match(/^(\d{4})(\d{2})(\d{2})_(\d{2})_res(\d+)m$/i);
+  if(m){
+    const [_, Y, Mo, D, H, R] = m;
+    const km = Math.round(parseInt(R,10)/1000);
+    return `${Y}-${Mo}-${D} ${H}Z • ${km} km`;
+  }
+  return String(runId);
+}
+
+async function hasMaps(runId){
+  const url = `${MAPS_ROOT}/${runId}/${currentModel}/${currentVar}/maps.json`;
+  try{
+    const r = await fetch(bust(url), { method: "HEAD", cache: "no-store" });
+    if(!r.ok) return false;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    // ако Pages върне HTML вместо JSON за липсващ файл -> НЕ е валиден рън
+    if(ct.includes("text/html")) return false;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function normalizeRunsV2(data){
+  // returns { runs:[{id,label}], latestId }
+  let runs = [];
+  let latestId = null;
+
+  if(Array.isArray(data)){
+    // could be ["2026..", ...] or [{id,label}, ...]
+    if(data.length && typeof data[0] === "object"){
+      runs = data.map(x => ({ id: String(x.id || x.run || x.name || x.path || ""), label: String(x.label || x.id || "") }))
+                 .filter(x => x.id);
+    }else{
+      runs = data.map(x => ({ id: String(x), label: prettyRunLabel(String(x)) }));
+    }
+    latestId = runs.length ? runs[runs.length-1].id : null;
+    return { runs, latestId };
+  }
+
+  if(data && typeof data === "object"){
+    const rawRuns = data.runs || data.__runs || [];
+    if(Array.isArray(rawRuns)){
+      runs = rawRuns.map(x => {
+        if(typeof x === "string") return { id: String(x), label: prettyRunLabel(String(x)) };
+        const id = String(x.id || x.run || x.name || x.path || "");
+        const label = String(x.label || prettyRunLabel(id));
+        return { id, label };
+      }).filter(x => x.id);
+    }
+
+    latestId = (() => {
+    // Candidates:
+    // 1) resolved alias from data.latest (e.g. "latest_00z" / "latest_12z")
+    // 2) explicit latest_00z / latest_12z
+    // 3) if data.latest is already a real run id
+    const c = [];
+    const k = (data && typeof data.latest === "string") ? String(data.latest) : "";
+    if(k && k.startsWith("latest_") && data && typeof data[k] !== "undefined") c.push(String(data[k]));
+    if(data && data.latest_00z) c.push(String(data.latest_00z));
+    if(data && data.latest_12z) c.push(String(data.latest_12z));
+    if(data && data.latest && /^\d{8}_\d{2}z$/i.test(String(data.latest))) c.push(String(data.latest));
+
+    // Pick newest by lexicographic order (YYYYMMDD_HHz)
+    c.sort((a,b)=>String(b).localeCompare(String(a)));
+    return c[0] || (runs.length ? runs[runs.length-1].id : null);
+  })();
+
+    return { runs, latestId };
+  }
+
+  return { runs: [], latestId: null };
+}
+
+async function loadRuns(){
+  runSelect.innerHTML = "";
+  elNote.textContent = "Зареждам ръновете…";
+
+  const data = await fetchJSON(`${MAPS_ROOT}/runs_v2.json`);
+  const norm = normalizeRunsV2(data);
+
+  latestRunId = norm.latestId;
+  const runs = norm.runs;
+  // newest runs first (YYYYMMDD_HHz)
+  runs.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+
+
+  if(!runs.length) throw new Error("runs_v2.json няма рънове");
+
+  // добавяме всички, после disable за тези без maps.json
+  const opts = []
+  for(const r of runs){
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.label || prettyRunLabel(r.id);
+    runSelect.appendChild(opt);
+    opts.push(opt);
+  }
+
+  for(const opt of opts){
+    const ok = await hasMaps(opt.value);
+    if(!ok) opt.disabled = true;
+  }
+
+  // избери най-новия валиден
+  let pick = null;
+  if(latestRunId){
+    pick = opts.find(o => o.value === latestRunId && !o.disabled) || null;
+  }
+  if(!pick) pick = [...opts].reverse().find(o => !o.disabled) || opts.find(o => !o.disabled) || null;
+  if(!pick) throw new Error("няма валиден рън с maps.json");
+
+  currentRun = pick.value;
+  runSelect.value = currentRun;
+}
+
+async function loadFrames(){
+  // Custom maps: show demo + gate unless unlocked (session-only)
+  if (CUSTOM_VARS && CUSTOM_VARS.has(currentVar) && !isMasterUnlocked()){
+    showCustomDemoInViewer();
+    openCustomGate();
+    return;
+  }
+
+  // Auto-fallback: ако избраният рън няма този параметър, намери най-новия рън, който го има
+  await ensureRunHasVar();
+
+  if(!currentRun) return;
+
+  const meta = VARS[currentVar] || { title: currentVar };
+  elTitle.textContent = meta.title;
+
+  const base = `${MAPS_ROOT}/${currentRun}/${currentModel}/${currentVar}`;
+  const jsonUrl = `${base}/maps.json`;
+
+  elNote.textContent = `Зареждам… (${currentModel}, ${prettyRunLabel(currentRun)})`;
+
+  try{
+    let j = await fetchJSON(jsonUrl);
+
+    // compatibility: {frames:[...]} or {files:[...]}
+    if(j && !Array.isArray(j)){
+      if(Array.isArray(j.frames)) j = j.frames;
+      else if(Array.isArray(j.files)) j = j.files;
+    }
+
+    if(!Array.isArray(j) || !j.length) throw new Error("maps.json е празен");
+
+    frames = j.slice(SKIP_FIRST_FRAMES > 0 ? SKIP_FIRST_FRAMES : 0);
+    if(!frames.length) throw new Error("Няма кадри след SKIP_FIRST_FRAMES");
+
+    // keep same frame when switching model if possible
+    if(prevFrameName){
+      const k = frames.indexOf(prevFrameName);
+      frameIdx = (k >= 0) ? k : Math.max(0, Math.min(frameIdx, frames.length - 1));
+    }else{
+      frameIdx = Math.max(0, Math.min(frameIdx, frames.length - 1));
+    }
+
+    elRange.min = "1";
+    elRange.max = String(frames.length);
+    elRange.value = String(frameIdx + 1);
+
+    render();
+  }catch(e){
+    frames = [];
+    frameIdx = 0;
+    elImg.src = "";
+    elFile.textContent = "";
+    elCounter.textContent = "0 / 0";
+    elNote.textContent = `❌ Не мога да заредя: ${jsonUrl}`;
+    console.error(e);
+  }
+}
+
+function render(){
+  if(!frames.length) return;
+  if(enforcePremiumGateIfNeeded()) { /* blocked */ }
+
+  const fn = frames[frameIdx];
+  const base = `${MAPS_ROOT}/${currentRun}/${currentModel}/${currentVar}`;
+
+  elImg.src = bust(`${base}/${fn}`);
+  elFile.textContent = fn;
+  elCounter.textContent = `${frameIdx + 1} / ${frames.length}`;
+  elNote.textContent = `Run: ${prettyRunLabel(currentRun)} • ${currentModel}`;
+
+  // fix blank-until-scroll in some cases: force decode/repaint
+  try{
+    if(elImg.decode){
+      elImg.decode().catch(()=>{}).finally(()=>requestAnimationFrame(()=>{}));
+    }else{
+      requestAnimationFrame(()=>{});
+    }
+  }catch(e){}
+}
+
+// ===== events =====
+btnPrev.addEventListener("click", () => {
+  if(!frames.length) return;
+  frameIdx = (frameIdx - 1 + frames.length) % frames.length;
+  elRange.value = String(frameIdx + 1);
+  render();
+});
+
+btnNext.addEventListener("click", () => {
+  if(!frames.length) return;
+  frameIdx = (frameIdx + 1) % frames.length;
+  elRange.value = String(frameIdx + 1);
+  render();
+});
+
+btnPlay.addEventListener("click", () => { if(timer) stop(); else play(); });
+speedSelect.addEventListener("change", () => { if(timer){ stop(); play(); } });
+
+elRange.addEventListener("input", () => {
+  if(!frames.length) return;
+  frameIdx = parseInt(elRange.value, 10) - 1;
+  render();
+});
+
+btnFs.addEventListener("click", () => {
+  const el = document.getElementById("viewerCard") || document.querySelector(".viewer-card");
+  if(!document.fullscreenElement){ el.requestFullscreen?.(); }
+  else{ document.exitFullscreen?.(); }
+});
+
+function setModel(model, opts){
+  if(model !== "ALADIN") return;
+  opts = opts || {};
+  // ако бутонът е disabled, не правим нищо
+  if(model === "GFS"    && btnModelGFS.disabled)    return;
+  if(model === "ICON"   && btnModelICON.disabled)   return;
+  if(model === "ALADIN" && btnModelALADIN && btnModelALADIN.disabled) return;
+
+  prevFrameName = (frames && frames.length && frameIdx >= 0 && frameIdx < frames.length) ? frames[frameIdx] : "";
+  currentModel = model;
+
+  btnModelICON.classList.toggle("active", model === "ICON");
+  btnModelGFS.classList.toggle("active", model === "GFS");
+  if(btnModelALADIN) btnModelALADIN.classList.toggle("active", model === "ALADIN");
+
+  stop();
+  if(!opts.skipReload) loadFrames();
+}
+
+
+async function setVar(v){
+  currentVar = v;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.key === v));
+  // Sync dropdown (if this var is in extra maps dropdown)
+  if(extraMapsSelect){
+    const opt = extraMapsSelect.querySelector(`option[value="${v}"]`);
+    extraMapsSelect.value = opt ? v : "";
+  }
+
+  stop();
+
+  // При всяка нова карта първо пазим избрания в момента модел.
+  // Само ако я няма за него, минаваме към следващия по fallback ред.
+  await updateModelAvailability(true);
+  loadFrames();
+}
+
+btnModelICON.addEventListener("click", () => setModel("ICON"));
+btnModelGFS.addEventListener("click", () => setModel("GFS"));
+if(btnModelALADIN) btnModelALADIN.addEventListener("click", () => setModel("ALADIN"));
+
+runSelect.addEventListener("change", () => {
+  currentRun = runSelect.value;
+  stop();
+  updateModelAvailability().then(loadFrames);
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => setVar(btn.dataset.key));
+});
+
+if(extraMapsSelect){
+  extraMapsSelect.addEventListener("change", () => {
+    const v = extraMapsSelect.value;
+    if(!v) return;
+    setVar(v);
+  });
+}
+
+// ===== init =====
+(async () => {
+  try{
+    currentModel = "ALADIN";
+    currentVar   = "temp_2m";
+    try{ regionSelect.value = "bg"; }catch(e){}
+    await loadRuns();
+    setModel("ALADIN");
+    setVar("temp_2m");
+  }catch(e){
+    console.error(e);
+    elNote.textContent = "❌ Init error (виж console)";
+  }
+})();
+
+  function closeCustomGate(){
+    const demo = document.getElementById('demoWrapper');
+    if(demo) demo.style.display = 'block';
+
+    const o = document.getElementById("customGateOverlay");
+    if(o) o.style.display = "none";
+    // return to home / reset hash
+    if(location.hash) location.hash = "";
+  }
+</script>
+
+
+<!-- AUTOLOAD_LATEST_RUN_OVERLAY:START -->
+<script>
+(function () {
+  function findRunSelect() {
+    return document.querySelector('#run') ||
+           document.querySelector('select#run') ||
+           document.querySelector('select[name="run"]');
+  }
+
+  function forceLatestOnce() {
+    const sel = findRunSelect();
+    if (!sel || !sel.options || sel.options.length < 1) return false;
+
+    // latest is first IF runs are sorted latest-first (as we did)
+    const latest = sel.options[0].value;
+    if (!latest) return false;
+
+    try {
+      localStorage.removeItem('selectedRun');
+      localStorage.removeItem('currentRun');
+    } catch(e) {}
+
+    sel.value = latest;
+    try { localStorage.setItem('selectedRun', latest); } catch(e) {}
+
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    if (forceLatestOnce() || tries > 80) clearInterval(t);
+  }, 100);
+})();
+
+  function closeCustomGate(){
+    const demo = document.getElementById('demoWrapper');
+    if(demo) demo.style.display = 'block';
+
+    const o = document.getElementById("customGateOverlay");
+    if(o) o.style.display = "none";
+    // return to home / reset hash
+    if(location.hash) location.hash = "";
+  }
+</script>
+
+<!-- AUTOLOAD_LATEST_RUN_OVERLAY:END -->
+
+
+
+</body>
+</html>

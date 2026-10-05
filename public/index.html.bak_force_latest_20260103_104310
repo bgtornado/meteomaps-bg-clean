@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <!-- BUILD_UTC: 2026-01-01T19:48:19Z -->
+  <meta charset="UTF-8">
+  <title>meteomaps.bg – Карти и бурно време | GIT:39c8c85 | PROBE:20260101T200606Z:9127bb4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="meteomaps.bg – метеорологични карти с висока резолюция за България.">
+  <style>
+    :root{
+      --bg:#050816;
+      --accent:#3ba9ff;
+      --accent2:#8a5cff;
+      --accent3:#ff7bd1;
+      --text:#f5f5f7;
+      --text-muted:#b3b7c5;
+      --card-bg:#0d1225;
+      --border-subtle:rgba(255,255,255,.08);
+      --radius-xxl:26px;
+      --shadow-soft:0 22px 45px rgba(0,0,0,.55);
+    }
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#102853 0,#050816 55%);
+      color:var(--text);
+    }
+    a{color:inherit;text-decoration:none}
+
+    header{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter:blur(18px);
+      background:linear-gradient(to bottom,rgba(5,8,22,.98),rgba(5,8,22,.86));
+      border-bottom:1px solid var(--border-subtle);
+    }
+
+    .nav{
+      max-width:none;
+      margin:0;
+      padding:10px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .logo{
+      display:flex; align-items:center; gap:10px;
+      flex:0 0 auto;
+      min-width: 260px;
+    }
+    .logo-icon{
+      width:34px; height:34px; border-radius:40%;
+      background:radial-gradient(circle,#53c5ff,#1b75ff 55%,#0b1738);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900; font-size:16px;
+      box-shadow:0 0 22px rgba(59,169,255,.75);
+    }
+    .logo-text-main{font-weight:900;font-size:17px;letter-spacing:.2px}
+    .logo-text-sub{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.3px;
+      margin-top:2px;
+      font-family:"Comic Sans MS","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+      background:linear-gradient(90deg,#73e0ff,#3ba9ff,#8a5cff,#ff7bd1);
+      -webkit-background-clip:text;
+      color:transparent;
+      text-shadow:0 0 18px rgba(59,169,255,.22);
+      white-space:nowrap;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .wx-icon{      width:26px;      height:26px;
+      flex:0 0 auto;
+      filter: drop-shadow(0 0 10px rgba(255,208,0,.25));
+    }
+    .wx-cloud{ fill: #d9dde6; }
+    .wx-rain { stroke:#5fb6ff; stroke-width:2.2; stroke-linecap:round; }
+    .wx-bolt { fill:#ffd45a; }
+
+    .nav-links{
+      display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+      justify-content:center;
+      flex:1 1 auto;
+    }
+    .nav-links a{color:var(--text-muted)}
+    .nav-links a:hover{color:var(--text)}
+
+    .demo-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid rgba(115,224,255,.55);
+      background:linear-gradient(90deg, rgba(59,169,255,.18), rgba(138,92,255,.14), rgba(255,123,209,.10));
+      color:#eaf2ff;
+      font-weight:900;
+      font-size:12px;
+      box-shadow:0 0 22px rgba(59,169,255,.12);
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .demo-pill:hover{
+      border-color: rgba(115,224,255,.85);
+      box-shadow:0 0 30px rgba(59,169,255,.22);
+    }
+
+    .nav-cta{
+      padding:7px 14px;
+      border-radius:999px;
+      border:1px solid rgba(59,169,255,.7);
+      background:radial-gradient(circle at top,rgba(59,169,255,.25),rgba(5,8,22,.9));
+      color:#fff; cursor:pointer; white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    /* ===== Sections ===== */
+    .section{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px 28px;
+    }
+
+    .section-wide{
+      max-width:none;
+      margin:0;
+      padding:10px 18px 70px;
+    }
+    .section-wide .viewer-card{
+      max-width:3200px;
+      margin:0 auto;
+    }
+
+    .spacer{height:240px}
+
+    h2{margin:10px 0 12px 0; font-size:18px}
+
+    /* ===== Viewer ===== */
+    .viewer-grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    .viewer-tabs{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-start;
+      max-width: 320px;
+    }
+    .tab-btn{
+      width:100%;
+      text-align:left;
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.6);
+      color:var(--text-muted);
+      padding:14px 14px;
+      border-radius:14px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      font-size:16px;
+      line-height:1.15;
+    }
+    .tab-btn.active{
+      border-color:rgba(59,169,255,.65);
+      color:var(--text);
+      background:linear-gradient(90deg, rgba(59,169,255,.16), rgba(138,92,255,.12));
+    }
+
+    .viewer-card{
+      border-radius:var(--radius-xxl);
+      border:1px solid var(--border-subtle);
+      background:#0d1225;
+      padding:14px;
+      box-shadow:var(--shadow-soft);
+      position:relative;
+    }
+
+    .viewer-top{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:10px;flex-wrap:wrap;margin-bottom:10px;
+    }
+    .viewer-title strong{font-size:13px;color:#e6ebff}
+
+    .viewer-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.55);
+      color:var(--text);
+      padding:8px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn:hover{border-color:rgba(255,255,255,.18)}
+    .btn-nav{
+      width:44px;height:38px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:18px;line-height:1;
+    }
+    .btn-fullscreen{
+      border-color: rgba(115,224,255,.55);
+      background: linear-gradient(90deg, rgba(59,169,255,.22), rgba(138,92,255,.18), rgba(255,123,209,.12));
+      box-shadow: 0 0 20px rgba(59,169,255,.16);
+      padding:8px 14px;
+    }
+    .btn-fullscreen:hover{
+      border-color: rgba(115,224,255,.9);
+      box-shadow: 0 0 28px rgba(59,169,255,.26);
+    }
+    
+    .model-run{display:flex;align-items:center;gap:8px;margin-left:10px;flex-wrap:wrap}
+    .btn-toggle{padding:7px 12px;border-radius:999px;font-weight:900}
+    .btn-toggle.active{
+      border-color: rgba(115,224,255,.55);
+      background: rgba(115,224,255,.16);
+    }
+    .run-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-left:6px}
+    .select-run{min-width:180px}
+
+    .select{
+      border:1px solid var(--border-subtle);
+      background:rgba(9,14,40,.55);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+    }
+
+    .viewer-img{
+      width:100%;
+      height:auto;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.06);
+      display:block;
+      background:#060a18;
+      object-fit: contain;
+      max-height: calc(100vh - 320px);
+    }
+
+    .viewer-bottom{margin-top:10px; display:grid; gap:10px}
+    .slider-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    input[type="range"]{width:100%}
+    .frame-meta{
+      font-size:12px;color:var(--text-muted);
+      display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+
+    /* ===== About + Demo stacked ===== */
+    .section-wide-block{
+      max-width:none;
+      margin:0;
+      padding:18px 24px 28px;
+    }
+    .wide-inner{
+      max-width:1500px;
+      margin:0 auto;
+    }
+
+    .card{
+      background:var(--card-bg);
+      border-radius:16px;
+      padding:22px;
+      border:1px solid var(--border-subtle);
+    }
+    .card p{margin:0;font-size:14px;line-height:1.55;color:#e7ebff}
+
+    .stack{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+
+    .info-callout{
+      margin-top:14px;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid rgba(115,224,255,.35);
+      background:linear-gradient(90deg, rgba(59,169,255,.12), rgba(138,92,255,.10), rgba(255,123,209,.08));
+      color:#eaf2ff;
+      box-shadow:0 12px 26px rgba(0,0,0,.35);
+      font-weight:800;
+    }
+    .info-callout a{
+      color:#dff6ff;
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+
+    .demo-card{
+      border-radius:18px;
+      border:1px solid var(--border-subtle);
+      background:#0d1225;
+      padding:14px;
+      box-shadow:0 12px 26px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .demo-title{
+      display:flex;align-items:center;gap:8px;
+      font-weight:900;
+      margin:0;
+      color:#eaf2ff;
+      font-size:15px;
+    }
+    .demo-title .tag{
+      font-size:11px;
+      font-weight:900;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(115,224,255,.55);
+      background:rgba(59,169,255,.10);
+      color:#dff6ff;
+    }
+    .demo-card img{
+      display:block;
+      width:100%;
+      height:auto;
+      border-radius:12px;
+      margin-top:12px;
+    }
+
+    .footer-inner{
+      max-width:none;
+      margin:0;
+      padding:14px 24px;
+      font-size:12px;
+      color:var(--text-muted);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 1200px){
+      .viewer-grid{grid-template-columns:1fr}
+      .viewer-tabs{max-width:none;flex-direction:row;flex-wrap:wrap}
+      .tab-btn{width:auto}
+      .spacer{height:120px}
+      .demo-pill{display:none}
+      .viewer-img{max-height: calc(100vh - 360px);}
+      #viewerCard:fullscreen .viewer-img{max-height: calc(100vh - 220px);}
+      .wide-inner{max-width: 100%;}
+      .premium-grid{grid-template-columns:1fr;}
+    }
+  
+/* === UI size tweaks (requested) === */
+.viewer-controls{gap:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.viewer-controls::-webkit-scrollbar{height:8px}
+.viewer-controls::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+.btn{padding:10px 16px;font-size:14px;border-radius:14px}
+.btn-nav{padding:10px 14px;min-width:44px}
+.btn-toggle{padding:9px 16px;font-size:14px}
+.select{padding:10px 12px;font-size:14px}
+.run-label{font-size:14px;margin-left:10px}
+.model-run{gap:10px;margin-left:12px;flex-wrap:nowrap}
+.tab-btn{font-size:18px;padding:16px 16px}
+</style>
+
+<script>
+function __runsV2Normalize(data){
+  // return { runs:[{id,label}], latestId:null|string }
+  let runs = [];
+  let latestId = null;
+
+  if(Array.isArray(data)){
+    runs = data.map(x => ({id:String(x), label:String(x)}));
+    latestId = runs.length ? runs[0].id : null;
+    return { runs, latestId };
+  }
+
+  if(data && Array.isArray(((data.__runs)||data.runs))){
+    runs = ((data.__runs)||data.runs).map(r => {
+      if(typeof r === 'string') return { id: String(r), label: String(r) };
+      const id = r && r.id ? String(r.id) : "";
+      const label = r && r.label ? String(r.label) : id;
+      return { id, label };
+    }).filter(x => x.id);
+
+    // prefer real run ids
+    // Prefer the *newest* of latest_00z/latest_12z (both are YYYYMMDD_HHz)
+    const l00 = (data.latest_00z && String(data.latest_00z)) || null;
+    const l12 = (data.latest_12z && String(data.latest_12z)) || null;
+    latestId = (l00 && l12) ? (l00 > l12 ? l00 : l12) :
+               (l12 || l00) ||
+               (data.latest && String(data.latest).match(/^\d{8}_\d{2}z$/i) ? String(data.latest) : null) ||
+               (runs.length ? runs[0].id : null);
+
+    return { runs, latestId };
+  }
+
+  return { runs: [], latestId: null };
+}
+</script>
+<script>console.log('BUILD_UTC: 2026-01-01T19:48:19Z');</script>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a href="#top" class="logo" aria-label="meteomaps.bg">
+      <div class="logo-icon">M</div>
+      <div>
+        <div class="logo-text-main">meteomaps.bg</div>
+        <div class="logo-text-sub">
+          Карти и бурно време
+          <!-- Cloud + rain + lightning (standard gray cloud + yellow bolt) -->
+          <svg class="wx-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path class="wx-cloud" d="M24 49h24c8 0 14-5.5 14-13s-6-13-14-13c-1.2 0-2.4.1-3.5.4C41.6 17 36.6 13 30.5 13 23.9 13 18.4 18 17.7 24.5 11.3 25.7 6 31.4 6 38c0 6.6 5.4 11 12 11h6z"/>
+            <path class="wx-rain" d="M22 54l-4 6M34 54l-4 6M46 54l-4 6"/>
+            <path class="wx-bolt" d="M36 34l-8 14h6l-4 10 14-18h-7l5-6z"/>
+          </svg>
+        </div>
+      </div>
+    </a>
+
+    <div class="nav-links">
+      <a href="#viewer">Карти</a>
+      <a href="#about">За нас</a>
+      <a href="#contact">Контакт</a>
+      <a class="demo-pill" href="#demo15" title="Демо карта 1.5 км">✨ Демо 1.5 км</a>
+    </div>
+
+    <button class="nav-cta" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+      📩 Пиши ни
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="section section-wide" id="viewer">
+    <h2>Детайлни карти на 2 км резолюция</h2>
+
+    <div class="viewer-grid">
+      <div class="viewer-tabs" role="tablist" aria-label="Избор на тип карти">
+        <button class="tab-btn active" data-key="temp_2m" role="tab">🌡️ Температура на 2 м</button>
+        <button class="tab-btn" data-key="acc.precip" role="tab">🌧️ Акумулирани валежи</button>
+        <button class="tab-btn" data-key="wind_gusts" role="tab">💨 Пориви на вятъра</button>
+          <button class="tab-btn" data-key="t850" role="tab">🧊 Температура @ 850 hPa</button>
+          <button class="tab-btn" data-key="snow.depth" role="tab">❄️ Снежна покривка</button>
+      </div>
+
+      <div class="viewer-card" id="viewerCard">
+        <div class="viewer-top">
+          <div class="viewer-title">
+            <strong id="viewerTitle">🌡️ Температура на 2 м</strong>
+          </div>
+
+          <div class="viewer-controls">
+            <button class="btn btn-nav" id="btnPrev" title="Предна карта">&lt;</button>
+            <button class="btn" id="btnPlay" title="Пусни/Спри">▶</button>
+            <button class="btn btn-nav" id="btnNext" title="Следваща карта">&gt;</button>
+            <div class="model-run" aria-label="Източник и рън">
+              <button class="btn btn-toggle active" id="btnModelGFS" type="button" title="GFS">GFS</button>
+              <button class="btn btn-toggle" id="btnModelICON" type="button" title="ICON">ICON</button>
+
+              <label class="run-label" title="Избери рън">
+                Run
+                <select class="select select-run" id="runSelect"></select>
+              </label>
+            </div>
+
+
+            <button class="btn btn-fullscreen" id="btnFs" title="На цял екран (F)">На цял екран</button>
+
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
+              Скорост
+              <select class="select" id="speedSelect">
+                <option value="50">0.05s</option>
+                <option value="80">0.08s</option>
+                <option value="120">0.12s</option>
+                <option value="160">0.16s</option>
+                <option value="200">0.20s</option>
+                <option value="250">0.25s</option>
+                <option value="320" selected>0.32s</option>
+                <option value="400">0.40s</option>
+                <option value="600">0.60s</option>
+                <option value="900">0.90s</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <img id="viewerImg" class="viewer-img" src="" alt="WRF карта" loading="eager">
+
+        <div class="viewer-bottom">
+          <div class="slider-row">
+            <input id="frameRange" type="range" min="1" max="30" value="1" step="1" />
+            <div style="font-size:12px;color:var(--text-muted);min-width:92px;text-align:right;">
+              <span id="frameCounter">1 / 30</span>
+            </div>
+          </div>
+
+          <div class="frame-meta">
+            <div>Файл: <span id="frameFile" style="color:#e6ebff;"></span></div>
+            <div id="frameNote"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="section-wide-block" id="about">
+    <div class="wide-inner">
+      <h2>За meteomaps.bg</h2>
+
+      <div class="stack">
+        <div class="card">
+          <p>
+            Ние показваме метеорологични карти с висока резолюция за България, които са особено полезни при изготвянето на прогнози при
+            зимни обстановки, летни бури и екстремни явления.
+          </p>
+
+          <div class="info-callout">
+            🔎 За запитване за <strong>супер детайлни карти</strong> за конкретен град/регион – пишете ни на
+            <a href="mailto:skyreader@abv.bg">skyreader@abv.bg</a>.
+          </div>
+        </div>
+
+        <div class="demo-card" id="demo15">
+          <p class="demo-title"><span>✨ Демо карта</span> <span class="tag">1.5 км</span></p>
+          <img src="accum_demo_1p5km.png" alt="Демо карта 1.5 км WRF над България">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-wide-block" id="contact">
+    <div class="wide-inner">
+      <h2>Контакт</h2>
+      <div class="card">
+        <p style="margin:0 0 8px 0;">📧 Имейл: <strong>skyreader@abv.bg</strong></p>
+        <p style="margin:0;">▶ YouTube канал: <a href="https://www.youtube.com/@supercell7" target="_blank" style="color:#3ba9ff;">https://www.youtube.com/@supercell7</a></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    © <span id="year"></span> meteomaps.bg
+    <a href="#top">Начало</a>
+  </div>
+</footer>
+
+<script>
+function bust(url){
+  try {
+    const u = new URL(url, location.origin);
+    u.searchParams.set('v', Date.now().toString());
+    return u.pathname + '?' + u.searchParams.toString();
+  } catch(e) {
+    const sep = (url.includes('?') ? '&' : '?');
+    return url + sep + 'v=' + Date.now();
+  }
+}
+</script>
+<script>// ===== meteomaps.bg viewer (clean rebuild) =====
+
+document.getElementById("year").textContent = new Date().getFullYear();
+
+function bust(url){
+  try{
+    const u = new URL(url, location.origin);
+    u.searchParams.set("v", String(Date.now()));
+    return u.pathname + "?" + u.searchParams.toString();
+  }catch(e){
+    return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+  }
+}
+
+async function fetchJSON(url){
+  const r = await fetch(bust(url), { cache: "no-store" });
+  if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+  return await r.json();
+}
+
+const MAPS_ROOT = "/maps/runs";
+
+// 0 = показва всичко, 1 = маха първия кадър, 2 = маха първите два кадъра и т.н.
+const SKIP_FIRST_FRAMES = 1;
+
+const VARS = {
+  "temp_2m":     { title: "🌡️ Температура на 2 м" },
+  "acc.precip":  { title: "🌧️ Акумулирани валежи" },
+  "wind_gusts":  { title: "💨 Пориви на вятъра" },
+  "t850":        { title: "🧊 Температура @ 850 hPa" },
+  "snow.depth":  { title: "❄️ Снежна покривка" }
+};
+
+let currentVar   = "temp_2m";
+let currentModel = "GFS";   // GFS | ICON
+let currentRun   = null;    // real run id string (e.g. 20260101_00z)
+let latestRunId  = null;
+
+let frames = [];
+let frameIdx = 0;
+let prevFrameName = "";
+let timer = null;
+
+const elImg        = document.getElementById("viewerImg");
+const elTitle      = document.getElementById("viewerTitle");
+const elRange      = document.getElementById("frameRange");
+const elCounter    = document.getElementById("frameCounter");
+const elFile       = document.getElementById("frameFile");
+const elNote       = document.getElementById("frameNote");
+
+const btnPrev      = document.getElementById("btnPrev");
+const btnNext      = document.getElementById("btnNext");
+const btnPlay      = document.getElementById("btnPlay");
+const btnFs        = document.getElementById("btnFs");
+const speedSelect  = document.getElementById("speedSelect");
+
+const btnModelGFS  = document.getElementById("btnModelGFS");
+const btnModelICON = document.getElementById("btnModelICON");
+const runSelect    = document.getElementById("runSelect");
+
+function stop(){
+  if(timer){ clearInterval(timer); timer = null; }
+  btnPlay.textContent = "▶";
+}
+
+function play(){
+  if(timer || frames.length === 0) return;
+  btnPlay.textContent = "⏸";
+  const ms = parseInt(speedSelect.value, 10);
+  timer = setInterval(() => {
+    if(frames.length === 0) return;
+    frameIdx = (frameIdx + 1) % frames.length;
+    elRange.value = String(frameIdx + 1);
+    render();
+  }, ms);
+}
+
+function prettyRunLabel(runId){
+  // accepts: 20260101_00z or 20260101_00_res2000m
+  let m = String(runId).match(/^(\d{4})(\d{2})(\d{2})_(\d{2})z$/i);
+  if(m){
+    const [_, Y, Mo, D, H] = m;
+    return `${Y}-${Mo}-${D} ${H}Z`;
+  }
+  m = String(runId).match(/^(\d{4})(\d{2})(\d{2})_(\d{2})_res(\d+)m$/i);
+  if(m){
+    const [_, Y, Mo, D, H, R] = m;
+    const km = Math.round(parseInt(R,10)/1000);
+    return `${Y}-${Mo}-${D} ${H}Z • ${km} km`;
+  }
+  return String(runId);
+}
+
+async function hasMaps(runId){
+  const url = `${MAPS_ROOT}/${runId}/${currentModel}/${currentVar}/maps.json`;
+  try{
+    const r = await fetch(bust(url), { method: "HEAD", cache: "no-store" });
+    if(!r.ok) return false;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    // ако Pages върне HTML вместо JSON за липсващ файл -> НЕ е валиден рън
+    if(ct.includes("text/html")) return false;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function normalizeRunsV2(data){
+  // returns { runs:[{id,label}], latestId }
+  let runs = [];
+  let latestId = null;
+
+  if(Array.isArray(data)){
+    // could be ["2026..", ...] or [{id,label}, ...]
+    if(data.length && typeof data[0] === "object"){
+      runs = data.map(x => ({ id: String(x.id || x.run || x.name || x.path || ""), label: String(x.label || x.id || "") }))
+                 .filter(x => x.id);
+    }else{
+      runs = data.map(x => ({ id: String(x), label: prettyRunLabel(String(x)) }));
+    }
+    latestId = runs.length ? runs[0].id : null;
+    return { runs, latestId };
+  }
+
+  if(data && typeof data === "object"){
+    const rawRuns = data.runs || data.__runs || [];
+    if(Array.isArray(rawRuns)){
+      runs = rawRuns.map(x => {
+        if(typeof x === "string") return { id: String(x), label: prettyRunLabel(String(x)) };
+        const id = String(x.id || x.run || x.name || x.path || "");
+        const label = String(x.label || prettyRunLabel(id));
+        return { id, label };
+      }).filter(x => x.id);
+    }
+
+    latestId = (data.latest_12z && String(data.latest_12z)) ||
+               (data.latest_00z && String(data.latest_00z)) ||
+               ((data.latest && /^\d{8}_\d{2}z$/i.test(String(data.latest))) ? String(data.latest) : null) ||
+               (runs.length ? runs[0].id : null);
+
+    return { runs, latestId };
+  }
+
+  return { runs: [], latestId: null };
+}
+
+async function loadRuns(){
+  runSelect.innerHTML = "";
+  elNote.textContent = "Зареждам ръновете…";
+
+  const data = await fetchJSON(`${MAPS_ROOT}/runs_v2.json`);
+  const norm = normalizeRunsV2(data);
+
+  latestRunId = norm.latestId;
+  const runs = norm.runs;
+
+  // Newest first in dropdown
+  runs.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+
+  if(!runs.length) throw new Error("runs_v2.json няма рънове");
+
+  // добавяме всички, после disable за тези без maps.json
+  const opts = []
+  for(const r of runs){
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.label || prettyRunLabel(r.id);
+    runSelect.appendChild(opt);
+    opts.push(opt);
+  }
+
+  for(const opt of opts){
+    const ok = await hasMaps(opt.value);
+    if(!ok) opt.disabled = true;
+  }
+
+  // избери най-новия валиден
+  let pick = null;
+  if(latestRunId){
+    pick = opts.find(o => o.value === latestRunId && !o.disabled) || null;
+  }
+  if(!pick) pick = opts.find(o => !o.disabled) || null;
+  if(!pick) throw new Error("няма валиден рън с maps.json");
+
+  currentRun = pick.value;
+  runSelect.value = currentRun;
+}
+
+async function loadFrames(){
+  if(!currentRun) return;
+
+  const meta = VARS[currentVar] || { title: currentVar };
+  elTitle.textContent = meta.title;
+
+  const base = `${MAPS_ROOT}/${currentRun}/${currentModel}/${currentVar}`;
+  const jsonUrl = `${base}/maps.json`;
+
+  elNote.textContent = `Зареждам… (${currentModel}, ${prettyRunLabel(currentRun)})`;
+
+  try{
+    let j = await fetchJSON(jsonUrl);
+
+    // compatibility: {frames:[...]} or {files:[...]}
+    if(j && !Array.isArray(j)){
+      if(Array.isArray(j.frames)) j = j.frames;
+      else if(Array.isArray(j.files)) j = j.files;
+    }
+
+    if(!Array.isArray(j) || !j.length) throw new Error("maps.json е празен");
+
+    frames = j.slice(SKIP_FIRST_FRAMES > 0 ? SKIP_FIRST_FRAMES : 0);
+    if(!frames.length) throw new Error("Няма кадри след SKIP_FIRST_FRAMES");
+
+    // keep same frame when switching model if possible
+    if(prevFrameName){
+      const k = frames.indexOf(prevFrameName);
+      frameIdx = (k >= 0) ? k : Math.max(0, Math.min(frameIdx, frames.length - 1));
+    }else{
+      frameIdx = Math.max(0, Math.min(frameIdx, frames.length - 1));
+    }
+
+    elRange.min = "1";
+    elRange.max = String(frames.length);
+    elRange.value = String(frameIdx + 1);
+
+    render();
+  }catch(e){
+    frames = [];
+    frameIdx = 0;
+    elImg.src = "";
+    elFile.textContent = "";
+    elCounter.textContent = "0 / 0";
+    elNote.textContent = `❌ Не мога да заредя: ${jsonUrl}`;
+    console.error(e);
+  }
+}
+
+function render(){
+  if(!frames.length) return;
+
+  const fn = frames[frameIdx];
+  const base = `${MAPS_ROOT}/${currentRun}/${currentModel}/${currentVar}`;
+
+  elImg.src = bust(`${base}/${fn}`);
+  elFile.textContent = fn;
+  elCounter.textContent = `${frameIdx + 1} / ${frames.length}`;
+  elNote.textContent = `Run: ${prettyRunLabel(currentRun)} • ${currentModel}`;
+
+  // fix blank-until-scroll in some cases: force decode/repaint
+  try{
+    if(elImg.decode){
+      elImg.decode().catch(()=>{}).finally(()=>requestAnimationFrame(()=>{}));
+    }else{
+      requestAnimationFrame(()=>{});
+    }
+  }catch(e){}
+}
+
+// ===== events =====
+btnPrev.addEventListener("click", () => {
+  if(!frames.length) return;
+  frameIdx = (frameIdx - 1 + frames.length) % frames.length;
+  elRange.value = String(frameIdx + 1);
+  render();
+});
+
+btnNext.addEventListener("click", () => {
+  if(!frames.length) return;
+  frameIdx = (frameIdx + 1) % frames.length;
+  elRange.value = String(frameIdx + 1);
+  render();
+});
+
+btnPlay.addEventListener("click", () => { if(timer) stop(); else play(); });
+speedSelect.addEventListener("change", () => { if(timer){ stop(); play(); } });
+
+elRange.addEventListener("input", () => {
+  if(!frames.length) return;
+  frameIdx = parseInt(elRange.value, 10) - 1;
+  render();
+});
+
+btnFs.addEventListener("click", () => {
+  const el = document.getElementById("viewerCard") || document.querySelector(".viewer-card");
+  if(!document.fullscreenElement){ el.requestFullscreen?.(); }
+  else{ document.exitFullscreen?.(); }
+});
+
+function setModel(model){
+  prevFrameName = (frames && frames.length && frameIdx >= 0 && frameIdx < frames.length) ? frames[frameIdx] : "";
+  currentModel = model;
+  btnModelGFS.classList.toggle("active", model === "GFS");
+  btnModelICON.classList.toggle("active", model === "ICON");
+  stop();
+  loadFrames();
+}
+
+function setVar(v){
+  currentVar = v;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.key === v));
+  stop();
+  loadFrames();
+}
+
+btnModelGFS.addEventListener("click", () => setModel("GFS"));
+btnModelICON.addEventListener("click", () => setModel("ICON"));
+
+runSelect.addEventListener("change", () => {
+  currentRun = runSelect.value;
+  stop();
+  loadFrames();
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => setVar(btn.dataset.key));
+});
+
+// ===== init =====
+(async () => {
+  try{
+    currentModel = "GFS";
+    currentVar   = "temp_2m";
+    await loadRuns();
+    setModel("GFS");
+    setVar("temp_2m");
+  }catch(e){
+    console.error(e);
+    elNote.textContent = "❌ Init error (виж console)";
+  }
+})();
+</script>
+
+</body>
+</html>
