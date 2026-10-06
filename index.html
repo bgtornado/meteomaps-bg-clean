@@ -504,21 +504,34 @@
     }
 
 
-    /* ===== CLEAN PROMO BANNER ===== */
+    /* ===== TEMPORARY MAINTENANCE BANNER ===== */
 .outage-banner{
   width:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
   padding:16px 20px;
-  font-weight:900;
-  letter-spacing:.02em;
-  font-size:18px;
-  line-height:1.3;
   color:#ffffff;
-  background:transparent;
+  background:linear-gradient(90deg, rgba(255,145,0,.24), rgba(170,55,20,.28), rgba(255,145,0,.24));
+  border-top:1px solid rgba(255,190,80,.28);
+  border-bottom:1px solid rgba(255,190,80,.35);
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
   text-align:center;
+}
+.outage-notice{max-width:1500px;}
+.outage-title{
+  font-size:22px;
+  line-height:1.2;
+  font-weight:1000;
+  letter-spacing:.04em;
+  color:#ffd36b;
+}
+.outage-text{
+  margin-top:6px;
+  font-size:15px;
+  line-height:1.4;
+  font-weight:800;
+  color:#ffffff;
 }
 
 .outage-banner .promo-text{
@@ -684,19 +697,13 @@ function __runsV2Normalize(data){
   </div>
 
 <div class="outage-banner" id="outageBanner">
-  <span class="promo-icon">📍</span>
-  <div class="promo-text">
-    <span style="font-weight:700; font-size:16px;">
-      <span class="promo-head">ВИЖ:</span>
-      <a href="novosti.html" class="promo-link-strong promo-link-novosti">Нови функции в сайта</a>
-      <span style="color:#cccccc;"> • </span>
-      <a href="stats-72h.html" class="promo-link-strong promo-link-stats">3-дневна прогнозна статистика</a>
-      <span style="color:#cccccc;"> • </span>
-      <a href="meteogram.html" class="promo-link-strong promo-link-meteogram">почасова прогноза за всички градове</a>
-      <span style="color:#ffffff;"> 🇧🇬</span>
-    </span>
+  <div class="outage-notice">
+    <div class="outage-title">⚠️ ВРЕМЕННО ПРЕУСТАНОВЕНИ ОБНОВЯВАНИЯ</div>
+    <div class="outage-text">
+      Поради техническа профилактика нови рънове на модела временно няма да бъдат публикувани.
+      Последният наличен рън остава достъпен. Обновяванията ще бъдат възстановени след отстраняване на проблема.
+    </div>
   </div>
-  <span class="promo-icon">⚡</span>
 </div>
 
 </header>
